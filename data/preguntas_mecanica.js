@@ -1,4 +1,4 @@
-const preguntas_mecanica = [
+window.preguntas_mecanica = [
     // === NEUMÁTICOS === Pág 55-58
     {q:"Presión baja causa:",a:["Mayor consumo","Menor adherencia","Las dos + riesgo reventón"],ok:2},
     {q:"Neumático liso profundidad mínima:",a:["1mm","1,6mm","2mm"],ok:1},
