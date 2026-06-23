@@ -41,7 +41,7 @@ let estado = {
     normas: {idx:0,aciertos:0,racha:0,puntuacion:0},
     mecanica: {idx:0,aciertos:0,racha:0,puntuacion:0},
     auxilios: {idx:0,aciertos:0,racha:0,puntuacion:0},
-    mediambiente: {idx:0,aciertos:0,racha:0,puntuacion:0}
+    medioambiente: {idx:0,aciertos:0,racha:0,puntuacion:0}  // <-- CORREGIDO: tenía "mediambiente"
   },
   examen: {
     activa: false,
