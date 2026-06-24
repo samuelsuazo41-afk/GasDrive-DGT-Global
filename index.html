@@ -179,7 +179,7 @@ function nuevaPregunta(cat) {
 
 function seleccionarRespuesta(idx, correcta, cat) {
   // CORREGIDO: espacio entre id y.opcio
-  document.querySelectorAll(`#test-${cat}-opciones.opcio`).forEach((op, i) => {
+  document.querySelectorAll(`#test-${cat}-opciones .opcio`).forEach((op, i) => {
     op.classList.add('bloquejada');
     if(i === correcta) op.classList.add('correcta');
     if(i === idx && i!== correcta) op.classList.add('incorrecta');
