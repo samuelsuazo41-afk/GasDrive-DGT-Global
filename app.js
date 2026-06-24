@@ -41,7 +41,7 @@ let estado = {
     normas: {idx:0,aciertos:0,racha:0,puntuacion:0},
     mecanica: {idx:0,aciertos:0,racha:0,puntuacion:0},
     auxilios: {idx:0,aciertos:0,racha:0,puntuacion:0},
-    medioambiente: {idx:0,aciertos:0,racha:0,puntuacion:0}  
+    medioambiente: {idx:0,aciertos:0,racha:0,puntuacion:0}  // <-- CORREGIDO: tenía "mediambiente"
   },
   examen: {
     activa: false,
@@ -60,7 +60,6 @@ let estado = {
     emergencia: {idx:0,aciertos:0,puntuacion:0,current:null}
   }
 };
-
 // Helper para leer datos desde window sin romper si falta archivo
 function getPreguntas(cat) {
   const key = 'PREGUNTAS_' + cat.toUpperCase();
