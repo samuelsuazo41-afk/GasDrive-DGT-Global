@@ -56,7 +56,8 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
 #temario-lista{ display:grid; grid-template-columns:repeat(2,160px); gap:12px; justify-content:center; margin:14px auto 0; }
 .temario-item{ background:#1a1a1a; border:2px solid #00D9FF; border-radius:12px; padding:16px 10px; text-align:center; cursor:pointer; transition:0.2s; min-height:110px; display:flex; flex-direction:column; justify-content:center; }
 .temario-item:active{ transform:scale(0.96); background:#222; }
-#test-senales-imagen {
+/* CLAVE: Cuadros de imágenes. Solo se muestran si tienen contenido */
+#test-senales-imagen, #examen-imagen {
   text-align: center;
   margin: 22px auto 16px auto;
   padding: 18px;
@@ -67,14 +68,15 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
   border-radius: 18px;
   display: none;
 }
-#test-senales-imagen:not(:empty) { display: block; }
-#test-senales-imagen svg, #test-senales-imagen img { max-width: 100%; max-height: 190px; display: block; margin: 0 auto; }
+#test-senales-imagen:not(:empty), #examen-imagen:not(:empty) { display: block; }
+#test-senales-imagen svg, #test-senales-imagen img,
+#examen-imagen svg, #examen-imagen img { max-width: 100%; max-height: 190px; display: block; margin: 0 auto; }
 </style>
 </head>
 <body>
 <div class="header">
   <h1>🚘 GasDrive DGT ES</h1>
-  <div class="subtitle">630 Preguntas DGT. Offline<span class="coins" id="coins">💰 0</span></div>
+  <div class="subtitle">560+ Preguntas DGT RD 465/2025. Offline<span class="coins" id="coins">💰 0</span></div>
   <div id="motivacion">Cargando datos...</div>
 </div>
 
@@ -105,7 +107,6 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
       <h2>📋 NORMAS Y VELOCIDADES</h2>
       <div class="stats"><div>Aciertos: <span id="test-normas-aciertos">0</span>/5</div><div>Racha: <span id="test-normas-racha">0</span>🔥</div><div>Score: <span id="test-normas-score">0</span></div></div>
       <div class="progress-bar"><div class="progress-fill" id="test-normas-progress"></div></div>
-      <div id="test-normas-imagen" style="display:none"></div>
       <div class="pregunta" id="test-normas-pregunta"></div>
       <div id="test-normas-opciones"></div>
       <div class="feedback" id="test-normas-feedback"></div>
@@ -118,7 +119,6 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
       <h2>⚙️ MECÁNICA BÁSICA</h2>
       <div class="stats"><div>Aciertos: <span id="test-mecanica-aciertos">0</span>/5</div><div>Racha: <span id="test-mecanica-racha">0</span>🔥</div><div>Score: <span id="test-mecanica-score">0</span></div></div>
       <div class="progress-bar"><div class="progress-fill" id="test-mecanica-progress"></div></div>
-      <div id="test-mecanica-imagen" style="display:none"></div>
       <div class="pregunta" id="test-mecanica-pregunta"></div>
       <div id="test-mecanica-opciones"></div>
       <div class="feedback" id="test-mecanica-feedback"></div>
@@ -131,7 +131,6 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
       <h2>🚑 PRIMEROS AUXILIOS</h2>
       <div class="stats"><div>Aciertos: <span id="test-auxilios-aciertos">0</span>/5</div><div>Racha: <span id="test-auxilios-racha">0</span>🔥</div><div>Score: <span id="test-auxilios-score">0</span></div></div>
       <div class="progress-bar"><div class="progress-fill" id="test-auxilios-progress"></div></div>
-      <div id="test-auxilios-imagen" style="display:none"></div>
       <div class="pregunta" id="test-auxilios-pregunta"></div>
       <div id="test-auxilios-opciones"></div>
       <div class="feedback" id="test-auxilios-feedback"></div>
@@ -144,7 +143,6 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
       <h2>♻️ MEDIO AMBIENTE</h2>
       <div class="stats"><div>Aciertos: <span id="test-medioambiente-aciertos">0</span>/5</div><div>Racha: <span id="test-medioambiente-racha">0</span>🔥</div><div>Score: <span id="test-medioambiente-score">0</span></div></div>
       <div class="progress-bar"><div class="progress-fill" id="test-medioambiente-progress"></div></div>
-      <div id="test-medioambiente-imagen" style="display:none"></div>
       <div class="pregunta" id="test-medioambiente-pregunta"></div>
       <div id="test-medioambiente-opciones"></div>
       <div class="feedback" id="test-medioambiente-feedback"></div>
@@ -160,13 +158,13 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
     <button class="sub-tab-btn" onclick="cambiarSubTab(event,'sit','carretera')">🛣️ Carretera</button>
     <button class="sub-tab-btn" onclick="cambiarSubTab(event,'sit','emergencia')">🚨 Emergencia</button>
   </div>
-  <div id="sit-clima" class="sub-content active"><div class="card"><h2 id="sit-titulo">🌧️ CASOS REALES - CLIMA</h2><div class="stats"><div>Resueltas: <span id="sit-clima-aciertos">0</span>/20</div><div>Score: <span id="sit-clima-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-clima-progress"></div></div><div class="pregunta" id="sit-clima-pregunta"></div><div id="sit-clima-opciones"></div><div class="feedback" id="sit-clima-feedback"></div><button class="btn-sig" id="btn-sig-sit-clima" onclick="siguienteSituacion(event,'clima')" disabled>SIGUIENTE</button></div></div>
-  <div id="sit-urbano" class="sub-content"><div class="card"><h2>🏙️ CASOS REALES - URBANO</h2><div class="stats"><div>Resueltas: <span id="sit-urbano-aciertos">0</span>/20</div><div>Score: <span id="sit-urbano-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-urbano-progress"></div></div><div class="pregunta" id="sit-urbano-pregunta"></div><div id="sit-urbano-opciones"></div><div class="feedback" id="sit-urbano-feedback"></div><button class="btn-sig" id="btn-sig-sit-urbano" onclick="siguienteSituacion(event,'urbano')" disabled>SIGUIENTE</button></div></div>
-  <div id="sit-carretera" class="sub-content"><div class="card"><h2>🛣️ CASOS REALES - CARRETERA</h2><div class="stats"><div>Resueltas: <span id="sit-carretera-aciertos">0</span>/20</div><div>Score: <span id="sit-carretera-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-carretera-progress"></div></div><div class="pregunta" id="sit-carretera-pregunta"></div><div id="sit-carretera-opciones"></div><div class="feedback" id="sit-carretera-feedback"></div><button class="btn-sig" id="btn-sig-sit-carretera" onclick="siguienteSituacion(event,'carretera')" disabled>SIGUIENTE</button></div></div>
-  <div id="sit-emergencia" class="sub-content"><div class="card"><h2>🚨 CASOS REALES - EMERGENCIA</h2><div class="stats"><div>Resueltas: <span id="sit-emergencia-aciertos">0</span>/20</div><div>Score: <span id="sit-emergencia-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-emergencia-progress"></div></div><div class="pregunta" id="sit-emergencia-pregunta"></div><div id="sit-emergencia-opciones"></div><div class="feedback" id="sit-emergencia-feedback"></div><button class="btn-sig" id="btn-sig-sit-emergencia" onclick="siguienteSituacion(event,'emergencia')" disabled>SIGUIENTE</button></div></div>
+  <div id="sit-clima" class="sub-content active"><div class="card"><h2 id="sit-titulo">🌧️ CASOS REALES - CLIMA</h2><div class="stats"><div>Resueltas: <span id="sit-clima-aciertos">0</span>/40</div><div>Score: <span id="sit-clima-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-clima-progress"></div></div><div class="pregunta" id="sit-clima-pregunta"></div><div id="sit-clima-opciones"></div><div class="feedback" id="sit-clima-feedback"></div><button class="btn-sig" id="btn-sig-sit-clima" onclick="siguienteSituacion(event,'clima')" disabled>SIGUIENTE</button></div></div>
+  <div id="sit-urbano" class="sub-content"><div class="card"><h2>🏙️ CASOS REALES - URBANO</h2><div class="stats"><div>Resueltas: <span id="sit-urbano-aciertos">0</span>/40</div><div>Score: <span id="sit-urbano-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-urbano-progress"></div></div><div class="pregunta" id="sit-urbano-pregunta"></div><div id="sit-urbano-opciones"></div><div class="feedback" id="sit-urbano-feedback"></div><button class="btn-sig" id="btn-sig-sit-urbano" onclick="siguienteSituacion(event,'urbano')" disabled>SIGUIENTE</button></div></div>
+  <div id="sit-carretera" class="sub-content"><div class="card"><h2>🛣️ CASOS REALES - CARRETERA</h2><div class="stats"><div>Resueltas: <span id="sit-carretera-aciertos">0</span>/40</div><div>Score: <span id="sit-carretera-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-carretera-progress"></div></div><div class="pregunta" id="sit-carretera-pregunta"></div><div id="sit-carretera-opciones"></div><div class="feedback" id="sit-carretera-feedback"></div><button class="btn-sig" id="btn-sig-sit-carretera" onclick="siguienteSituacion(event,'carretera')" disabled>SIGUIENTE</button></div></div>
+  <div id="sit-emergencia" class="sub-content"><div class="card"><h2>🚨 CASOS REALES - EMERGENCIA</h2><div class="stats"><div>Resueltas: <span id="sit-emergencia-aciertos">0</span>/40</div><div>Score: <span id="sit-emergencia-score">0</span></div></div><div class="progress-bar"><div class="progress-fill" id="sit-emergencia-progress"></div></div><div class="pregunta" id="sit-emergencia-pregunta"></div><div id="sit-emergencia-opciones"></div><div class="feedback" id="sit-emergencia-feedback"></div><button class="btn-sig" id="btn-sig-sit-emergencia" onclick="siguienteSituacion(event,'emergencia')" disabled>SIGUIENTE</button></div></div>
 </div>
 
-<div id="tab-examen" class="tab-content"><div class="card"><h2>📋 EXAMEN OFICIAL 30 PREGUNTAS</h2><div class="stats"><div>Pregunta: <span id="examen-num">0</span>/30</div><div>Aciertos: <span id="examen-aciertos">0</span></div><div>Tiempo: <span id="examen-timer">30:00</span></div></div><div class="progress-bar"><div class="progress-fill" id="examen-progress"></div></div><div class="pregunta" id="examen-pregunta">Pulsa Iniciar Examen</div><div id="examen-imagen" style="display:none"></div><div id="examen-opciones"></div><button class="btn-sig" id="btn-iniciar-examen" onclick="iniciarExamen(event)">INICIAR EXAMEN</button><button class="btn-sig" id="btn-sig-examen" onclick="siguientePreguntaExamen(event)" style="display:none" disabled>SIGUIENTE</button><div id="examen-resultado" style="display:none"></div></div></div>
+<div id="tab-examen" class="tab-content"><div class="card"><h2>📋 EXAMEN OFICIAL 30 PREGUNTAS</h2><div class="stats"><div>Pregunta: <span id="examen-num">0</span>/30</div><div>Aciertos: <span id="examen-aciertos">0</span></div><div>Tiempo: <span id="examen-timer">30:00</span></div></div><div class="progress-bar"><div class="progress-fill" id="examen-progress"></div></div><div id="examen-imagen"></div><div class="pregunta" id="examen-pregunta">Pulsa Iniciar Examen</div><div id="examen-opciones"></div><button class="btn-sig" id="btn-iniciar-examen" onclick="iniciarExamen(event)">INICIAR EXAMEN</button><button class="btn-sig" id="btn-sig-examen" onclick="siguientePreguntaExamen(event)" style="display:none" disabled>SIGUIENTE</button><div id="examen-resultado" style="display:none"></div></div></div>
 
 <div id="tab-garage" class="tab-content"><div class="card"><h2>🏁 TU GARAJE</h2><div class="score-big" id="garage-score">🏎️ 90 CV</div><div id="garage-lista"></div></div></div>
 
@@ -186,7 +184,8 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
   <button class="tab-btn" onclick="cambiarTab(event,'temario')"><span class="emoji">📖</span>TEMARIO</button>
 </div>
 
-<!-- CAMBIO CLAVE: Solo carga app.js como módulo. Borra todos los data/*.js -->
+<!-- RUTAS CORRECTAS SEGÚN TU REPO -->
+<script src="./data/senales_svg.js"></script>
 <script type="module" src="./src/app.js"></script>
 
 <script>
