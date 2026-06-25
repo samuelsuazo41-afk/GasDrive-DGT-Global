@@ -1,29 +1,24 @@
-const CACHE = 'gasdrive-v9.5.40'; // Sube versión cada update para forzar caché
+const CACHE = 'gasdrive-v9.6.0'; // Subida de versión por cambio de estructura
 const FILES = [
   './',
   './index.html',
-  './styles.css',
-  './apps.js',
+  './app.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
 
-  // ============================================
-  // BLOQUE 1: DATA - Preguntas + SVG CBG
-  // RUTAS CORREGIDAS CON /data/
-  // ============================================
-  './data/preguntas_senales.js',
-  './data/preguntas_normas.js', 
-  './data/preguntas_mecanica.js',
-  './data/preguntas_auxilios.js',
-  './data/preguntas_medioambiente.js',
-  './data/preguntas_situaciones.js',
+  // SVG de señales - sigue en /data/
   './data/senales_svg.js',
 
-  // ============================================
-  // PDFs Temario - 5 archivos completos
-  // Para tab Temario offline
-  // ============================================
+  // PREGUNTAS JSON - NUEVA RUTA /content/preguntas/
+  './content/preguntas/senales.json',
+  './content/preguntas/normas.json',
+  './content/preguntas/mecanica.json',
+  './content/preguntas/auxilios.json',
+  './content/preguntas/medioambiente.json',
+  './content/preguntas/situaciones.json',
+
+  // PDFs Temario - raíz
   './01_Senales_Tomo_I_RD_465_2025.pdf',
   './02_Normas_Circulacion_Tomo_II_Edicion_2024.pdf',
   './03_Manual_IX_Primeros_Auxilios_2025.pdf',
@@ -33,7 +28,9 @@ const FILES = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(FILES))
+    caches.open(CACHE)
+      .then(cache => cache.addAll(FILES))
+      .catch(err => console.log('SW cache error:', err))
   );
   self.skipWaiting();
 });
@@ -47,7 +44,19 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET' || e.request.url.startsWith('chrome-extension')) return;
+  
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+    caches.match(e.request).then(cached => {
+      return cached || fetch(e.request).then(response => {
+        if (response.status === 200 && e.request.url.startsWith(self.location.origin)) {
+          const responseClone = response.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, responseClone));
+        }
+        return response;
+      }).catch(() => {
+        if (e.request.mode === 'navigate') return caches.match('./index.html');
+      });
+    })
   );
 });
