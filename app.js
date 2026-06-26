@@ -966,5 +966,7 @@ export {
   comprarEmoji,
   equiparEmoji,
   abrirPDF,
-  cerrarPDF
+  cerrarPDF,
+  comprarCoche,        
+  comprarAccesorios    
 };
