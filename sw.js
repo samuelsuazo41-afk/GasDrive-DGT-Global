@@ -1,4 +1,4 @@
-const CACHE = 'gasdrive-v9.6.14'; // Subida de versión por cambio de estructura
+const CACHE = 'gasdrive-v9.6.15'; // Subida de versión por cambio de estructura
 const FILES = [
   './',
   './index.html',
