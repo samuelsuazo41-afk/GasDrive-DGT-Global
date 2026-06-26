@@ -301,7 +301,12 @@ async function getSituaciones(cat) {
 }
 
 function getSVG(id) {
-  return `<img src="/content/imagenes/svg/${id}.svg" style="max-width:100%;height:auto">`;
+  // Si existe el objeto SENALES_SVG del archivo data/senales_svg.js
+  if (typeof SENALES_SVG!== 'undefined' && SENALES_SVG[id]) {
+    return SENALES_SVG[id];
+  }
+  // Fallback: cargar de /content/imagenes/svg/
+  return `<img src="./content/imagenes/svg/${id}.svg" style="max-width:100%;height:auto">`;
 }
 
 function barajarArray(arr) {
