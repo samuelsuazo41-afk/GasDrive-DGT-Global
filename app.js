@@ -1,11 +1,14 @@
-// GASDRIVE DGT V9.0 ES - COMPLETO SIN PARCHES
+// GASDRIVE DGT V9.6.0 ES - COMPLETO CON PRECARGA + ANTAGÓNICAS
 const EMOJIS_ACIERTO = ['🚀','💎','👑','🔥','💯','⚡','🏆','🦄','🤑','✅','💪','😎','🎯','💥','🌟','🎉'];
 const EMOJIS_FALLO = ['❌','💀','😭','⛔','💔','😵','🤦','🚫','💩','🤡','💥','😤'];
 
 // CACHE PARA JSON
 const cachePreguntas = {};
+let PRECARGA_COMPLETA = false;
 
-// INTRO SCREEN - NO TOCAR
+// ============================================
+// INTRO + PRECARGA 2S - NO TOCAR
+// ============================================
 function mostrarIntro(){
   document.body.insertAdjacentHTML('afterbegin', `
     <div id="intro-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#1a1a2e,#16213e);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px">
@@ -19,13 +22,46 @@ function mostrarIntro(){
         <div>📚 630 preguntas DGT reales</div>
         <div>📖 Temarios completos para repasar</div>
       </div>
-      <button onclick="cerrarIntro()" style="background:linear-gradient(135deg,#ff8c00,#ff2d55);border:none;color:#fff;padding:16px 48px;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer">EMPEZAR</button>
+      <button id="btn-empezar" onclick="cerrarIntro()" style="background:linear-gradient(135deg,#ff8c00,#ff2d55);border:none;color:#fff;padding:16px 48px;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer" disabled>CARGANDO...</button>
     </div>
   `);
+  precargarTodo();
+}
+
+async function precargarTodo() {
+  const btn = document.getElementById('btn-empezar');
+  const inicio = Date.now();
+
+  try {
+    const cats = ['senales', 'normas', 'mecanica', 'auxilios', 'medioambiente'];
+    const promesas = cats.map(cat => getPreguntas(cat));
+    await Promise.all(promesas);
+    PRECARGA_COMPLETA = true;
+
+    const tiempoTranscurrido = Date.now() - inicio;
+    const esperar = Math.max(0, 2000 - tiempoTranscurrido);
+
+    setTimeout(() => {
+      if (btn) {
+        btn.textContent = 'EMPEZAR';
+        btn.disabled = false;
+      }
+    }, esperar);
+
+  } catch (err) {
+    console.error('Error precarga:', err);
+    if (btn) {
+      btn.textContent = 'REINTENTAR';
+      btn.disabled = false;
+      btn.onclick = () => location.reload();
+    }
+  }
 }
 
 function cerrarIntro(){
-  document.getElementById('intro-screen').remove();
+  if (!PRECARGA_COMPLETA) return;
+  document.getElementById('intro-screen')?.remove();
+  init();
 }
 
 // ===== ESTADO GLOBAL =====
@@ -39,11 +75,11 @@ let estado = {
   accesorios: JSON.parse(localStorage.getItem('gd_accesorios')) || [],
   emojis: JSON.parse(localStorage.getItem('gd_emojis')) || [],
   test: {
-    senales: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null},
-    normas: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null},
-    mecanica: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null},
-    auxilios: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null},
-    medioambiente: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null}
+    senales: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
+    normas: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
+    mecanica: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
+    auxilios: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
+    medioambiente: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null}
   },
   examen: {
     activa: false,
@@ -55,10 +91,10 @@ let estado = {
     tiempo: 1800
   },
   sit: {
-    clima: {idx:0,aciertos:0,puntuacion:0,current:null},
-    urbano: {idx:0,aciertos:0,puntuacion:0,current:null},
-    carretera: {idx:0,aciertos:0,puntuacion:0,current:null},
-    emergencia: {idx:0,aciertos:0,puntuacion:0,current:null}
+    clima: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null},
+    urbano: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null},
+    carretera: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null},
+    emergencia: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null}
   }
 };
 
@@ -235,12 +271,10 @@ const EMOJI_TIENDA = [
 ];
 
 // ===== HELPERS =====
-// CAMBIO 1: getPreguntas ahora lee JSON
 async function getPreguntas(cat) {
   if (cachePreguntas[cat]) return cachePreguntas[cat];
-  
   try {
-    const response = await fetch(`/content/preguntas/${cat}.json`);
+    const response = await fetch(`./content/preguntas/${cat}.json`);
     if (!response.ok) throw new Error(`No se encontró ${cat}.json`);
     const data = await response.json();
     cachePreguntas[cat] = data;
@@ -251,18 +285,27 @@ async function getPreguntas(cat) {
   }
 }
 
-function getSituaciones(cat) {
-  const key = 'preguntas_situaciones';
-  return window[key] && window[key][cat]? window[key][cat] : [];
+async function getSituaciones(cat) {
+  const key = `sit_${cat}`;
+  if (cachePreguntas[key]) return cachePreguntas[key];
+  try {
+    const res = await fetch(`./content/preguntas/situaciones.json`);
+    const data = await res.json();
+    const filtrado = data.filter(s => s.categoria === cat);
+    cachePreguntas[key] = filtrado;
+    return filtrado;
+  } catch (err) {
+    console.error(`Error cargando situaciones:`, err);
+    return [];
+  }
 }
 
-// CAMBIO 2: getSVG ahora carga archivo
 function getSVG(id) {
   return `<img src="/content/imagenes/svg/${id}.svg" style="max-width:100%;height:auto">`;
 }
 
 function barajarArray(arr) {
-  const a = arr.slice();
+  const a = [...arr];
   for(let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
@@ -271,15 +314,10 @@ function barajarArray(arr) {
 }
 
 // ===== INIT =====
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+document.addEventListener('DOMContentLoaded', mostrarIntro);
 
 function init() {
-  console.log("GasDrive V9.0 ES cargado");
-  mostrarIntro();
+  console.log("GasDrive V9.6.0 ES cargado");
   actualizarCoins();
   cargarPregunta('senales');
   cargarPregunta('normas');
@@ -320,7 +358,6 @@ function cambiarTab(e, tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   e.target.closest('.tab-btn').classList.add('active');
-
   if(tab === 'garage') cargarGaraje();
   if(tab === 'tienda') cargarTienda();
   if(tab === 'tips') cargarTips();
@@ -345,7 +382,6 @@ function cambiarCategoriaSit(cat) {
   sitCategoriaActiva = cat;
   document.querySelectorAll('#tab-situaciones.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
   if(event && event.target) event.target.classList.add('active');
-
   const titulos = {
     clima: '🌧️ CASOS REALES - CLIMA ADVERSO',
     urbano: '🏙️ CASOS REALES - URBANO',
@@ -357,42 +393,46 @@ function cambiarCategoriaSit(cat) {
   cargarSituacion(cat);
 }
 
-// ===== TEST - 5 CATEGORÍAS =====
-// CAMBIO 3: cargarPregunta ahora es async
+// ===== TEST - ANTAGÓNICAS CORREGIDO =====
 async function cargarPregunta(cat) {
   const s = estado.test[cat];
-  const preguntas = barajarArray(await getPreguntas(cat));
 
-  if(!preguntas || preguntas.length === 0) {
-    console.log('Esperando datos para', cat);
-    setTimeout(() => cargarPregunta(cat), 100);
-    return;
+  if (!s.preguntasBarajadas) {
+    const todas = await getPreguntas(cat);
+    if (!todas || todas.length === 0) {
+      setTimeout(() => cargarPregunta(cat), 100);
+      return;
+    }
+    s.preguntasBarajadas = barajarArray([...todas]);
+    s.totalPreguntas = s.preguntasBarajadas.length;
   }
 
-  const pOriginal = preguntas[s.idx % preguntas.length];
-  const opcionesBarajadas = barajarArray(pOriginal.a || pOriginal.opciones);
-  const textoCorrecto = (pOriginal.a || pOriginal.opciones)[pOriginal.ok!== undefined? pOriginal.ok : pOriginal.respuesta_correcta];
+  const pOriginal = s.preguntasBarajadas[s.idx % s.totalPreguntas];
+  if (!pOriginal) return;
+
+  const opcionesOriginales = pOriginal.a || pOriginal.opciones || [];
+  const opcionesBarajadas = barajarArray([...opcionesOriginales]);
+  const indiceOriginal = pOriginal.ok!== undefined? pOriginal.ok : pOriginal.respuesta_correcta;
+  const textoCorrecto = opcionesOriginales[indiceOriginal];
   const nuevoIndexCorrecto = opcionesBarajadas.indexOf(textoCorrecto);
+
   const p = {...pOriginal, a: opcionesBarajadas, ok: nuevoIndexCorrecto};
   s.current = p;
 
   const preguntaEl = document.getElementById(`test-${cat}-pregunta`);
-  if(!preguntaEl) {
-    console.error(`No existe test-${cat}-pregunta`);
-    return;
-  }
+  if(!preguntaEl) return;
 
-  preguntaEl.textContent = p.q || p.pregunta;
+  preguntaEl.textContent = p.q || p.pregunta || '';
   document.getElementById(`test-${cat}-aciertos`).textContent = s.aciertos;
   document.getElementById(`test-${cat}-racha`).textContent = s.racha;
   document.getElementById(`test-${cat}-score`).textContent = s.puntuacion;
-  document.getElementById(`test-${cat}-progress`).style.width = `${((s.idx % preguntas.length)/preguntas.length)*100}%`;
+  document.getElementById(`test-${cat}-progress`).style.width = `${((s.idx % s.totalPreguntas) / s.totalPreguntas) * 100}%`;
 
   const imgCont = document.getElementById(`test-${cat}-imagen`);
   if(imgCont) {
     if(cat === 'senales' && (p.codigo || p.codigo_dgt)) {
       const svg = getSVG(p.codigo || p.codigo_dgt);
-      imgCont.innerHTML = svg;
+      imgCont.innerHTML = svg || '';
       imgCont.style.display = svg? 'block' : 'none';
     } else {
       imgCont.innerHTML = '';
@@ -440,7 +480,7 @@ function responderTest(cat, idx, el) {
     mostrarEmoji(true, el);
   } else {
     el.classList.add('incorrecta');
-    cont.querySelectorAll('.opcio')[p.ok].classList.add('correcta');
+    cont.querySelectorAll('.opcio')[p.ok]?.classList.add('correcta');
     document.getElementById(`test-${cat}-feedback`).className = 'feedback fallo';
     document.getElementById(`test-${cat}-feedback`).textContent = '❌ FALLO';
     mostrarEmoji(false, el);
@@ -456,30 +496,40 @@ function siguienteTest(e, cat) {
   cargarPregunta(cat);
 }
 
-// ===== CASOS - 4 CATEGORÍAS =====
-function cargarSituacion(cat) {
+// ===== CASOS - ANTAGÓNICAS CORREGIDO =====
+async function cargarSituacion(cat) {
   if(!cat) cat = sitCategoriaActiva;
   const s = estado.sit[cat];
-  const casos = barajarArray(getSituaciones(cat));
-  if(!casos || casos.length === 0) {
-    setTimeout(() => cargarSituacion(cat), 100);
-    return;
+
+  if (!s.casosBarajados) {
+    const todos = await getSituaciones(cat);
+    if (!todos || todos.length === 0) {
+      setTimeout(() => cargarSituacion(cat), 100);
+      return;
+    }
+    s.casosBarajados = barajarArray([...todos]);
+    s.totalCasos = s.casosBarajados.length;
   }
 
-  const pOriginal = casos[s.idx % casos.length];
-  const opcionesBarajadas = barajarArray(pOriginal.a);
-  const textoCorrecto = pOriginal.a[pOriginal.ok];
+  const pOriginal = s.casosBarajados[s.idx % s.totalCasos];
+  if (!pOriginal) return;
+
+  const opcionesOriginales = pOriginal.a || [];
+  const opcionesBarajadas = barajarArray([...opcionesOriginales]);
+  const textoCorrecto = opcionesOriginales[pOriginal.ok];
   const nuevoIndexCorrecto = opcionesBarajadas.indexOf(textoCorrecto);
+
   const p = {...pOriginal, a: opcionesBarajadas, ok: nuevoIndexCorrecto};
   s.current = p;
 
   const preguntaEl = document.getElementById(`sit-${cat}-pregunta`);
   if(!preguntaEl) return;
 
-  preguntaEl.textContent = p.q;
+
+   preguntaEl.textContent = p.q || '';
   document.getElementById(`sit-${cat}-aciertos`).textContent = s.aciertos;
   document.getElementById(`sit-${cat}-score`).textContent = s.puntuacion;
-  document.getElementById(`sit-${cat}-progress`).style.width = `${((s.idx % casos.length)/casos.length)*100}%`;
+  document.getElementById(`sit-${cat}-progress`).style.width = `${((s.idx % s.totalCasos) / s.totalCasos) * 100}%`;
 
   const cont = document.getElementById(`sit-${cat}-opciones`);
   if(!cont) return;
@@ -488,7 +538,7 @@ function cargarSituacion(cat) {
   document.getElementById(`sit-${cat}-feedback`).textContent = '';
   document.getElementById(`btn-sig-sit-${cat}`).disabled = true;
 
-   p.a.forEach((txt, i) => {
+  p.a.forEach((txt, i) => {
     const div = document.createElement('div');
     div.className = 'opcio';
     div.textContent = txt;
@@ -515,7 +565,7 @@ function responderSituacion(cat, idx, el) {
     mostrarEmoji(true, el);
   } else {
     el.classList.add('incorrecta');
-    cont.querySelectorAll('.opcio')[p.ok].classList.add('correcta');
+    cont.querySelectorAll('.opcio')[p.ok]?.classList.add('correcta');
     document.getElementById(`sit-${cat}-feedback`).className = 'feedback fallo';
     document.getElementById(`sit-${cat}-feedback`).textContent = '❌ FALLO';
     mostrarEmoji(false, el);
@@ -533,11 +583,11 @@ function siguienteSituacion(e, cat) {
 // ===== EXAMEN OFICIAL =====
 async function iniciarExamen(e) {
   const todas = [
-  ...await getPreguntas('senales'),
-  ...await getPreguntas('normas'),
-  ...await getPreguntas('mecanica'),
-  ...await getPreguntas('auxilios'),
-  ...await getPreguntas('medioambiente')
+   ...await getPreguntas('senales'),
+   ...await getPreguntas('normas'),
+   ...await getPreguntas('mecanica'),
+   ...await getPreguntas('auxilios'),
+   ...await getPreguntas('medioambiente')
   ];
 
   if(todas.length < 30) {
@@ -822,7 +872,6 @@ function prevTip(e) {
   mostrarTip();
 }
 
-// RUTAS TEMARIO EN RAÍZ - AJUSTADO A TUS ARCHIVOS REALES
 function cargarTemario() {
   const container = document.getElementById('temario-lista');
   if(!container) return;
@@ -896,7 +945,7 @@ function actualizarMensajeMotivacional() {
 if('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./service-worker.js')
-   .then(reg => console.log('SW registrado'))
-   .catch(err => console.log('SW error:', err));
+  .then(reg => console.log('SW registrado'))
+  .catch(err => console.log('SW error:', err));
   });
 }
