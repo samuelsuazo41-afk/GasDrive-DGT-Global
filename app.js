@@ -331,6 +331,13 @@ function init() {
   cargarPregunta('medioambiente');
   cargarSituacion('clima');
   actualizarMensajeMotivacional();
+  
+  // SERVICE WORKER - Registrado aquí dentro de init()
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+ .then(reg => console.log('SW registrado'))
+ .catch(err => console.log('SW error:', err));
+  }
 }
 
 function guardar() {
@@ -530,8 +537,7 @@ async function cargarSituacion(cat) {
   const preguntaEl = document.getElementById(`sit-${cat}-pregunta`);
   if(!preguntaEl) return;
 
-
-   preguntaEl.textContent = p.q || '';
+  preguntaEl.textContent = p.q || '';
   document.getElementById(`sit-${cat}-aciertos`).textContent = s.aciertos;
   document.getElementById(`sit-${cat}-score`).textContent = s.puntuacion;
   document.getElementById(`sit-${cat}-progress`).style.width = `${((s.idx % s.totalCasos) / s.totalCasos) * 100}%`;
@@ -588,11 +594,11 @@ function siguienteSituacion(e, cat) {
 // ===== EXAMEN OFICIAL =====
 async function iniciarExamen(e) {
   const todas = [
-   ...await getPreguntas('senales'),
-   ...await getPreguntas('normas'),
-   ...await getPreguntas('mecanica'),
-   ...await getPreguntas('auxilios'),
-   ...await getPreguntas('medioambiente')
+  ...await getPreguntas('senales'),
+  ...await getPreguntas('normas'),
+  ...await getPreguntas('mecanica'),
+  ...await getPreguntas('auxilios'),
+  ...await getPreguntas('medioambiente')
   ];
 
   if(todas.length < 30) {
@@ -946,11 +952,19 @@ function actualizarMensajeMotivacional() {
   if(el) el.textContent = msg;
 }
 
-// SERVICE WORKER
-if('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js')
-  .then(reg => console.log('SW registrado'))
-  .catch(err => console.log('SW error:', err));
-  });
-} 
+// ===== EXPORTS =====
+export {
+  init,
+  cambiarTab,
+  cambiarSubTab,
+  siguienteTest,
+  siguienteSituacion,
+  iniciarExamen,
+  siguientePreguntaExamen,
+  prevTip,
+  nextTip,
+  comprarEmoji,
+  equiparEmoji,
+  abrirPDF,
+  cerrarPDF
+};
