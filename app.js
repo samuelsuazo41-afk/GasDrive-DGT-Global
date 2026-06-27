@@ -1,4 +1,4 @@
-// GASDRIVE DGT V9.6.1 ES - ARQUITECTURA CHRONICLES CAT
+// GASDRIVE DGT V9.6.1 ES - ARQUITECTURA CHRONICLES CAT + PLACEHOLDER GRID
 const EMOJIS_ACIERTO = ['🚀','💎','👑','🔥','💯','⚡','🏆','🦄','🤑','✅','💪','😎','🎯','💥','🌟','🎉'];
 const EMOJIS_FALLO = ['❌','💀','😭','⛔','💔','😵','🤦','🚫','💩','🤡','💥','😤'];
 
@@ -385,7 +385,7 @@ function cambiarCategoriaSit(cat) {
   cargarSituacion(cat);
 }
 
-// ===== TEST - ANTAGÓNICAS CORREGIDO =====
+// ===== TEST - ANTAGÓNICAS + PLACEHOLDER GRID =====
 async function cargarPregunta(cat) {
   const s = estado.test[cat];
 
@@ -426,10 +426,12 @@ async function cargarPregunta(cat) {
     if(cat === 'senales' && (p.codigo || p.codigo_dgt)) {
       const svg = getSVG(p.codigo || p.codigo_dgt);
       imgCont.innerHTML = svg || '';
+      imgCont.classList.remove('placeholder');
       imgCont.style.display = svg? 'block' : 'none';
     } else {
       imgCont.innerHTML = '';
-      imgCont.style.display = 'none';
+      imgCont.classList.add('placeholder');
+      imgCont.style.display = 'flex';
     }
   }
 
@@ -614,6 +616,7 @@ function iniciarTimerExamen() {
   }, 1000);
 }
 
+// ===== EXAMEN CON PLACEHOLDER GRID =====
 function cargarPreguntaExamen() {
   if(estado.examen.index >= 30) return finalizarExamen();
 
@@ -639,10 +642,12 @@ function cargarPreguntaExamen() {
 
   if((p.codigo || p.codigo_dgt) && imgCont) {
     imgCont.innerHTML = getSVG(p.codigo || p.codigo_dgt);
+    imgCont.classList.remove('placeholder');
     imgCont.style.display = 'block';
   } else if(imgCont) {
     imgCont.innerHTML = '';
-    imgCont.style.display = 'none';
+    imgCont.classList.add('placeholder');
+    imgCont.style.display = 'flex';
   }
 
   p.a.forEach((txt, i) => {
