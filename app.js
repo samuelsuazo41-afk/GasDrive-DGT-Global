@@ -955,6 +955,8 @@ function actualizarMensajeMotivacional() {
 // ===== EXPORTS =====
 export {
   init,
+  mostrarIntro,      
+  cerrarIntro,       
   cambiarTab,
   cambiarSubTab,
   siguienteTest,
@@ -967,6 +969,6 @@ export {
   equiparEmoji,
   abrirPDF,
   cerrarPDF,
-  comprarCoche,        
-  comprarAccesorios    
+  comprarCoche,
+  comprarAccesorios
 };
