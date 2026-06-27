@@ -44,31 +44,22 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
 .btn-sig{background:linear-gradient(180deg,#4a4a4a 0%,#2a2a2a 100%);color:#fff;border:none;padding:14px;width:100%;font-size:15px;font-weight:700;margin-top:10px;border-radius:10px;cursor:pointer}
 .btn-sig:disabled{background:#333;color:#666;cursor:not-allowed}
+.btn-pista{background:#333;color:var(--accent);border:1px solid var(--accent);padding:10px;width:100%;font-size:13px;font-weight:700;margin-top:6px;border-radius:10px;cursor:pointer}
 .stats{display:flex;justify-content:space-between;background:#0f0f0f;padding:9px;border-radius:7px;margin-bottom:10px;font-size:12px}
 .stats span{color:var(--accent);font-weight:700}
 .feedback{text-align:center;font-size:18px;font-weight:900;margin:12px 0;padding:10px;border-radius:9px}
 .feedback.acierto{background:#0a4;color:#fff}
 .feedback.fallo{background:#a00;color:#fff}
+.pista{font-size:13px;color:#FFD700;background:#1a1a0a;border:1px solid #FFD700;padding:10px;border-radius:8px;margin:10px 0;display:none}
+.pista.activa{display:block}
 .progress-bar{background:#222;height:7px;border-radius:3px;margin:7px 0;overflow:hidden}
 .progress-fill{background:linear-gradient(90deg,var(--accent),#0f5);height:100%;transition:width 0.3s}
 #test-senales-imagen, #examen-imagen{text-align:center;margin:22px auto 16px auto;padding:18px;min-height:220px;max-width:270px;background:#0d0d0d;border:2px solid #2f2f2f;border-radius:18px;display:none}
 #test-senales-imagen:not(:empty), #examen-imagen:not(:empty){display:block}
 #test-senales-imagen svg, #test-senales-imagen img{max-width:100%;max-height:190px;display:block;margin:0 auto}
-#test-senales-imagen.placeholder, #examen-imagen.placeholder{
-  display:flex!important;
-  align-items:center;
-  justify-content:center;
-  color:#555;
-  font-size:48px;
-}
-#test-senales-imagen.placeholder::before{
-  content:"🚦";
-  opacity:0.3;
-}
-#examen-imagen.placeholder::before{
-  content:"📋";
-  opacity:0.3;
-}
+#test-senales-imagen.placeholder, #examen-imagen.placeholder{display:flex!important;align-items:center;justify-content:center;color:#555;font-size:48px}
+#test-senales-imagen.placeholder::before{content:"🚦";opacity:0.3}
+#examen-imagen.placeholder::before{content:"📋";opacity:0.3}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid #222;display:flex;z-index:100}
 .nav-item{flex:1;padding:11px 4px;text-align:center;cursor:pointer;transition:0.2s;color:#666;font-size:10px}
 .nav-item.active{color:var(--accent);background:#1a1a1a}
@@ -80,6 +71,11 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
 .modal-botons button{flex:1;padding:12px;border:none;border-radius:8px;font-weight:700;cursor:pointer}
 .btn{background:var(--accent);color:#000}
 .btn-sec{background:#333;color:#fff}
+.lista-temas{display:flex;flex-direction:column;gap:8px}
+.tema-item{background:#222;border:1px solid #333;padding:14px;border-radius:10px;cursor:pointer}
+.tema-item:hover{border-color:var(--accent)}
+.grid-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card-mini{background:#222;border:1px solid #333;padding:12px;border-radius:10px;text-align:center;font-size:13px}
 </style>
 </head>
 <body>
@@ -90,13 +86,12 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
 </header>
 
 <div class="stats-bar">
-  <div class="stat-item">
-    <span id="coins">💰 0</span>
-  </div>
+  <div class="stat-item"><span id="coins">💰 0</span></div>
   <div class="stat-item" id="stats">Score: 0</div>
 </div>
 
 <div class="container">
+  <!-- TEST -->
   <div id="tab-test" class="tab-content active">
     <div class="sub-tabs">
       <button class="sub-tab-btn active" onclick="cambiarSubTab(event,'test','senales')">🚦 Señales</button>
@@ -104,7 +99,9 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
       <button class="sub-tab-btn" onclick="cambiarSubTab(event,'test','mecanica')">⚙️ Mecánica</button>
       <button class="sub-tab-btn" onclick="cambiarSubTab(event,'test','auxilios')">🚑 Auxilios</button>
       <button class="sub-tab-btn" onclick="cambiarSubTab(event,'test','medioambiente')">♻️ MedioAmb</button>
+      <button class="sub-tab-btn" onclick="cambiarSubTab(event,'test','situaciones')">🚗 Situaciones</button>
     </div>
+
     <div id="test-senales" class="sub-content active">
       <div class="card">
         <h2>🚦 SEÑALES DE TRÁFICO</h2>
@@ -113,9 +110,13 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
         <div id="test-senales-imagen"></div>
         <div class="pregunta" id="test-senales-pregunta">Cargando...</div>
         <div id="test-senales-opciones"></div>
+        <div class="pista" id="test-senales-pista"></div>
         <div class="feedback" id="test-senales-feedback"></div>
+        <button class="btn-pista" onclick="mostrarPista('senales')">💡 IRIS: Pista -5 monedas</button>
         <button class="btn-sig" id="btn-sig-test-senales" onclick="siguienteTest(event,'senales')" disabled>SIGUIENTE</button>
       </div>
+    </div>
+
     <div id="test-normas" class="sub-content">
       <div class="card">
         <h2>📋 NORMAS Y VELOCIDADES</h2>
@@ -123,10 +124,13 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
         <div class="progress-bar"><div class="progress-fill" id="test-normas-progress"></div></div>
         <div class="pregunta" id="test-normas-pregunta"></div>
         <div id="test-normas-opciones"></div>
+        <div class="pista" id="test-normas-pista"></div>
         <div class="feedback" id="test-normas-feedback"></div>
+        <button class="btn-pista" onclick="mostrarPista('normas')">💡 IRIS: Pista -5 monedas</button>
         <button class="btn-sig" id="btn-sig-test-normas" onclick="siguienteTest(event,'normas')" disabled>SIGUIENTE</button>
       </div>
     </div>
+
     <div id="test-mecanica" class="sub-content">
       <div class="card">
         <h2>⚙️ MECÁNICA BÁSICA</h2>
@@ -134,10 +138,13 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
         <div class="progress-bar"><div class="progress-fill" id="test-mecanica-progress"></div></div>
         <div class="pregunta" id="test-mecanica-pregunta"></div>
         <div id="test-mecanica-opciones"></div>
+        <div class="pista" id="test-mecanica-pista"></div>
         <div class="feedback" id="test-mecanica-feedback"></div>
+        <button class="btn-pista" onclick="mostrarPista('mecanica')">💡 IRIS: Pista -5 monedas</button>
         <button class="btn-sig" id="btn-sig-test-mecanica" onclick="siguienteTest(event,'mecanica')" disabled>SIGUIENTE</button>
       </div>
     </div>
+
     <div id="test-auxilios" class="sub-content">
       <div class="card">
         <h2>🚑 PRIMEROS AUXILIOS</h2>
@@ -145,9 +152,13 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
         <div class="progress-bar"><div class="progress-fill" id="test-auxilios-progress"></div></div>
         <div class="pregunta" id="test-auxilios-pregunta"></div>
         <div id="test-auxilios-opciones"></div>
+        <div class="pista" id="test-auxilios-pista"></div>
         <div class="feedback" id="test-auxilios-feedback"></div>
+        <button class="btn-pista" onclick="mostrarPista('auxilios')">💡 IRIS: Pista -5 monedas</button>
         <button class="btn-sig" id="btn-sig-test-auxilios" onclick="siguienteTest(event,'auxilios')" disabled>SIGUIENTE</button>
       </div>
+    </div>
+
     <div id="test-medioambiente" class="sub-content">
       <div class="card">
         <h2>♻️ MEDIO AMBIENTE</h2>
@@ -155,12 +166,29 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
         <div class="progress-bar"><div class="progress-fill" id="test-medioambiente-progress"></div></div>
         <div class="pregunta" id="test-medioambiente-pregunta"></div>
         <div id="test-medioambiente-opciones"></div>
+        <div class="pista" id="test-medioambiente-pista"></div>
         <div class="feedback" id="test-medioambiente-feedback"></div>
+        <button class="btn-pista" onclick="mostrarPista('medioambiente')">💡 IRIS: Pista -5 monedas</button>
         <button class="btn-sig" id="btn-sig-test-medioambiente" onclick="siguienteTest(event,'medioambiente')" disabled>SIGUIENTE</button>
+      </div>
+    </div>
+
+    <div id="test-situaciones" class="sub-content">
+      <div class="card">
+        <h2>🚗 SITUACIONES REALES</h2>
+        <div class="stats"><div>Aciertos: <span id="test-situaciones-aciertos">0</span></div><div>Racha: <span id="test-situaciones-racha">0</span>🔥</div><div>Score: <span id="test-situaciones-score">0</span></div></div>
+        <div class="progress-bar"><div class="progress-fill" id="test-situaciones-progress"></div></div>
+        <div class="pregunta" id="test-situaciones-pregunta"></div>
+        <div id="test-situaciones-opciones"></div>
+        <div class="pista" id="test-situaciones-pista"></div>
+        <div class="feedback" id="test-situaciones-feedback"></div>
+        <button class="btn-pista" onclick="mostrarPista('situaciones')">💡 IRIS: Pista -5 monedas</button>
+        <button class="btn-sig" id="btn-sig-test-situaciones" onclick="siguienteTest(event,'situaciones')" disabled>SIGUIENTE</button>
       </div>
     </div>
   </div>
 
+  <!-- EXAMEN -->
   <div id="tab-examen" class="tab-content">
     <div class="card">
       <h2>📋 EXAMEN OFICIAL 30 PREGUNTAS</h2>
@@ -174,6 +202,50 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
       <div id="examen-resultado" style="display:none"></div>
     </div>
   </div>
+
+  <!-- CASOS -->
+  <div id="tab-situaciones" class="tab-content">
+    <div class="card">
+      <h2>🚗 CASOS PRÁCTICOS</h2>
+      <p style="text-align:center;font-size:14px;color:#999;margin-bottom:12px">Resuelve situaciones reales paso a paso</p>
+      <div class="lista-temas" id="lista-casos"></div>
+    </div>
+  </div>
+
+  <!-- GARAJE -->
+  <div id="tab-garage" class="tab-content">
+    <div class="card">
+      <h2>🏎️ MI GARAJE</h2>
+      <div class="stats"><div>Nivel: <span id="garage-nivel">1</span></div><div>XP: <span id="garage-xp">0</span></div></div>
+      <div id="garage-coches" class="grid-cards"></div>
+    </div>
+  </div>
+
+  <!-- TIENDA -->
+  <div id="tab-tienda" class="tab-content">
+    <div class="card">
+      <h2>🛒 TIENDA</h2>
+      <p style="text-align:center;font-size:14px;color:#999;margin-bottom:12px">Gasta tus monedas aquí</p>
+      <div id="tienda-items" class="lista-temas"></div>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div id="tab-tips" class="tab-content">
+    <div class="card">
+      <h2>💡 TIPS Y TRUCOS</h2>
+      <div id="tips-lista" class="lista-temas"></div>
+    </div>
+  </div>
+
+  <!-- TEMARIOS -->
+  <div id="tab-temario" class="tab-content">
+    <div class="card">
+      <h2>📚 TEMARIOS DGT</h2>
+      <p style="text-align:center;font-size:14px;color:#999;margin-bottom:12px">Todos los temas del manual oficial</p>
+      <div id="temario-lista" class="lista-temas"></div>
+    </div>
+  </div>
 </div>
 
 <nav class="bottom-nav">
@@ -185,14 +257,34 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
     <span class="nav-icon">📋</span>
     <span>EXAMEN</span>
   </div>
+  <div class="nav-item" onclick="cambiarTab('situaciones', event)">
+    <span class="nav-icon">🚗</span>
+    <span>CASOS</span>
+  </div>
+  <div class="nav-item" onclick="cambiarTab('garage', event)">
+    <span class="nav-icon">🏎️</span>
+    <span>GARAJE</span>
+  </div>
+  <div class="nav-item" onclick="cambiarTab('tienda', event)">
+    <span class="nav-icon">🛒</span>
+    <span>TIENDA</span>
+  </div>
+  <div class="nav-item" onclick="cambiarTab('tips', event)">
+    <span class="nav-icon">💡</span>
+    <span>TIPS</span>
+  </div>
+  <div class="nav-item" onclick="cambiarTab('temario', event)">
+    <span class="nav-icon">📚</span>
+    <span>TEMARIOS</span>
+  </div>
 </nav>
 
 <div id="modal" class="modal hidden">
   <div class="modal-content">
     <p id="modalText"></p>
     <div class="modal-botons">
-      <button onclick="tancarModal()">Cancel·lar</button>
-      <button onclick="confirmarAccio()">Acceptar</button>
+      <button class="btn-sec" onclick="tancarModal()">Cancelar</button>
+      <button class="btn" onclick="confirmarAccio()">Aceptar</button>
     </div>
   </div>
 </div>
