@@ -1,66 +1,49 @@
-// GASDRIVE DGT V9.6.0 ES - COMPLETO CON PRECARGA + ANTAGÓNICAS
+// GASDRIVE DGT V9.6.0 ES - VERSIÓN ESTABLE SIN BUCLES
 const EMOJIS_ACIERTO = ['🚀','💎','👑','🔥','💯','⚡','🏆','🦄','🤑','✅','💪','😎','🎯','💥','🌟','🎉'];
 const EMOJIS_FALLO = ['❌','💀','😭','⛔','💔','😵','🤦','🚫','💩','🤡','💥','😤'];
 
-// CACHE PARA JSON
 const cachePreguntas = {};
-let PRECARGA_COMPLETA = false;
+let DATOS_LISTOS = false;
 
-// ============================================
-// INTRO + PRECARGA 2S - NO TOCAR
-// ============================================
-function mostrarIntro(){
-  document.body.insertAdjacentHTML('afterbegin', `
-    <div id="intro-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#1a1a2e,#16213e);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px">
-      <div style="font-size:64px;margin-bottom:20px">🚗</div>
-      <h1 style="font-size:32px;margin:0 0 10px">GasDrive DGT ES 2026</h1>
-      <p style="font-size:18px;opacity:0.8;margin:0 0 10px">Aprueba el carnet en 15 min al día</p>
-      <p style="font-size:16px;opacity:0.9;margin:0 0 30px">📚 Temarios oficiales DGT para estudiar cuando quieras</p>
-      <div style="text-align:left;font-size:16px;margin-bottom:40px;line-height:2">
-        <div>💰 Gana coins respondiendo bien</div>
-        <div>🏎️ Compra supercars en el Garaje</div>
-        <div>📚 630 preguntas DGT reales</div>
-        <div>📖 Temarios completos para repasar</div>
-      </div>
-      <button id="btn-empezar" onclick="cerrarIntro()" style="background:linear-gradient(135deg,#ff8c00,#ff2d55);border:none;color:#fff;padding:16px 48px;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer" disabled>CARGANDO...</button>
-    </div>
-  `);
-  precargarTodo();
-}
-
-async function precargarTodo() {
+// ===== SISTEMA DE CARGA NUEVO - REEMPLAZA MOSTRAR INTRO =====
+async function iniciarCarga() {
   const btn = document.getElementById('btn-empezar');
+  const status = document.getElementById('intro-status');
   const inicio = Date.now();
 
   try {
     const cats = ['senales', 'normas', 'mecanica', 'auxilios', 'medioambiente'];
-    const promesas = cats.map(cat => getPreguntas(cat));
-    await Promise.all(promesas);
-    PRECARGA_COMPLETA = true;
+    const resultados = await Promise.allSettled(cats.map(cat => getPreguntas(cat)));
 
-    const tiempoTranscurrido = Date.now() - inicio;
-    const esperar = Math.max(0, 2000 - tiempoTranscurrido);
+    const fallidos = resultados.filter(r => r.status === 'rejected').length;
+    const tiempoMinimo = 2000 - (Date.now() - inicio);
 
-    setTimeout(() => {
-      if (btn) {
-        btn.textContent = 'EMPEZAR';
-        btn.disabled = false;
-      }
-    }, esperar);
+    if (tiempoMinimo > 0) await new Promise(r => setTimeout(r, tiempoMinimo));
 
-  } catch (err) {
-    console.error('Error precarga:', err);
-    if (btn) {
+    if (fallidos === 5) {
+      status.textContent = '❌ Error cargando datos. Revisa tu conexión';
       btn.textContent = 'REINTENTAR';
       btn.disabled = false;
       btn.onclick = () => location.reload();
+    } else {
+      DATOS_LISTOS = true;
+      status.textContent = fallidos > 0? `⚠️ ${5-fallidos}/5 categorías cargadas` : '✅ Datos listos';
+      btn.textContent = 'EMPEZAR';
+      btn.disabled = false;
+      btn.onclick = entrarApp;
     }
+  } catch (err) {
+    status.textContent = '❌ Error crítico';
+    btn.textContent = 'REINTENTAR';
+    btn.disabled = false;
+    btn.onclick = () => location.reload();
   }
 }
 
-function cerrarIntro(){
-  if (!PRECARGA_COMPLETA) return;
-  document.getElementById('intro-screen')?.remove();
+function entrarApp() {
+  if (!DATOS_LISTOS) return;
+  document.getElementById('intro-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
   init();
 }
 
@@ -98,7 +81,6 @@ let estado = {
   }
 };
 
-// 100 TIPS
 const TIPS = [
   {emoji:'🚗', txt:'Regla de los 2 segundos: mantén distancia con el coche de delante'},
   {emoji:'👀', txt:'Mira 12 segundos hacia delante, no solo el coche de delante'},
@@ -271,18 +253,17 @@ const EMOJI_TIENDA = [
 ];
 
 // ===== HELPERS =====
-async function getPreguntas(cat) {
-  if (cachePreguntas[cat]) return cachePreguntas[cat];
-  try {
-    const response = await fetch(`./content/preguntas/${cat}.json`);
-    if (!response.ok) throw new Error(`No se encontró ${cat}.json`);
-    const data = await response.json();
-    cachePreguntas[cat] = data;
-    return data;
-  } catch (err) {
-    console.error(`Error cargando ${cat}:`, err);
-    return [];
-  }
+function getPreguntas(cat) {
+  if (cachePreguntas[cat]) return Promise.resolve(cachePreguntas[cat]);
+  return fetch(`./content/preguntas/${cat}.json`)
+   .then(r => {
+      if (!r.ok) throw new Error(`No se encontró ${cat}.json`);
+      return r.json();
+    })
+   .then(data => {
+      cachePreguntas[cat] = data;
+      return data;
+    });
 }
 
 async function getSituaciones(cat) {
@@ -301,11 +282,9 @@ async function getSituaciones(cat) {
 }
 
 function getSVG(id) {
-  // Si existe el objeto SENALES_SVG del archivo data/senales_svg.js
   if (typeof SENALES_SVG!== 'undefined' && SENALES_SVG[id]) {
     return SENALES_SVG[id];
   }
-  // Fallback: cargar de /content/imagenes/svg/
   return `<img src="./content/imagenes/svg/${id}.svg" style="max-width:100%;height:auto">`;
 }
 
@@ -319,8 +298,6 @@ function barajarArray(arr) {
 }
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', mostrarIntro);
-
 function init() {
   console.log("GasDrive V9.6.0 ES cargado");
   actualizarCoins();
@@ -331,12 +308,11 @@ function init() {
   cargarPregunta('medioambiente');
   cargarSituacion('clima');
   actualizarMensajeMotivacional();
-  
-  // SERVICE WORKER - Registrado aquí dentro de init()
+
   if('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
- .then(reg => console.log('SW registrado'))
- .catch(err => console.log('SW error:', err));
+     .then(reg => console.log('SW registrado'))
+     .catch(err => console.log('SW error:', err));
   }
 }
 
@@ -412,7 +388,8 @@ async function cargarPregunta(cat) {
   if (!s.preguntasBarajadas) {
     const todas = await getPreguntas(cat);
     if (!todas || todas.length === 0) {
-      setTimeout(() => cargarPregunta(cat), 100);
+      const preguntaEl = document.getElementById(`test-${cat}-pregunta`);
+      if(preguntaEl) preguntaEl.textContent = `Error: No hay preguntas de ${cat}`;
       return;
     }
     s.preguntasBarajadas = barajarArray([...todas]);
@@ -516,7 +493,8 @@ async function cargarSituacion(cat) {
   if (!s.casosBarajados) {
     const todos = await getSituaciones(cat);
     if (!todos || todos.length === 0) {
-      setTimeout(() => cargarSituacion(cat), 100);
+      const preguntaEl = document.getElementById(`sit-${cat}-pregunta`);
+      if(preguntaEl) preguntaEl.textContent = `Error: No hay casos de ${cat}`;
       return;
     }
     s.casosBarajados = barajarArray([...todos]);
@@ -594,11 +572,11 @@ function siguienteSituacion(e, cat) {
 // ===== EXAMEN OFICIAL =====
 async function iniciarExamen(e) {
   const todas = [
-  ...await getPreguntas('senales'),
-  ...await getPreguntas('normas'),
-  ...await getPreguntas('mecanica'),
-  ...await getPreguntas('auxilios'),
-  ...await getPreguntas('medioambiente')
+   ...await getPreguntas('senales'),
+   ...await getPreguntas('normas'),
+   ...await getPreguntas('mecanica'),
+   ...await getPreguntas('auxilios'),
+   ...await getPreguntas('medioambiente')
   ];
 
   if(todas.length < 30) {
@@ -955,8 +933,8 @@ function actualizarMensajeMotivacional() {
 // ===== EXPORTS =====
 export {
   init,
-  mostrarIntro,      
-  cerrarIntro,       
+  iniciarCarga,
+  entrarApp,
   cambiarTab,
   cambiarSubTab,
   siguienteTest,
