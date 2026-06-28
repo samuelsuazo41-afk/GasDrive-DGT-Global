@@ -1,4 +1,4 @@
-const CACHE = 'gasdrive-v10.1.3'; // Misma versión que app.js
+const CACHE = 'gasdrive-v10.1.4'; // Misma versión que app.js
 const FILES = [
   './',
   './index.html',
