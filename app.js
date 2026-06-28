@@ -1152,11 +1152,11 @@ const EMOJIS_FALLO = ['❌','💀','😭','⛔','💔','😵','🤦','🚫','�
 
 let DATOS_LISTOS = false;
 
-// ===== CARGA SIN FETCH - DATOS INTEGRADOS =====
+// ===== CARGA - DATOS YA INTEGRADOS EN app.js =====
 function iniciarCarga() {
   const btn = document.getElementById('btn-empezar');
   const status = document.getElementById('intro-status');
-
+  
   if (typeof DATOS === 'undefined') {
     if(status) status.textContent = '❌ Error: No se encontró DATOS';
     return;
@@ -1164,7 +1164,7 @@ function iniciarCarga() {
 
   const cats = ['senales', 'normas', 'mecanica', 'auxilios', 'medioambiente'];
   let cargadas = 0;
-
+  
   cats.forEach(cat => {
     if (DATOS[cat] && DATOS[cat].length > 0) cargadas++;
   });
@@ -1231,7 +1231,7 @@ let estado = {
   }
 };
 
-// ===== HELPERS SIN FETCH =====
+// ===== HELPERS - TODO INTEGRADO =====
 function getPreguntas(cat) {
   return DATOS[cat] || [];
 }
@@ -1244,7 +1244,7 @@ function getSVG(id) {
   if (typeof SENALES_SVG!== 'undefined' && SENALES_SVG[id]) {
     return SENALES_SVG[id];
   }
-  return `<img src="./data/svg/${id}.svg" style="max-width:100%;height:auto">`;
+  return '';
 }
 
 function barajarArray(arr) {
@@ -1258,7 +1258,7 @@ function barajarArray(arr) {
 
 // ===== INIT =====
 function init() {
-  console.log("GasDrive V9.6.2 ES - Datos integrados");
+  console.log("GasDrive V9.6.2 ES - Datos integrados, PDFs en raíz");
   actualizarCoins();
   cargarPregunta('senales');
   cargarPregunta('normas');
@@ -1527,11 +1527,11 @@ function siguienteSituacion(e, cat) {
 // ===== EXAMEN OFICIAL =====
 function iniciarExamen(e) {
   const todas = [
-   ...getPreguntas('senales'),
-   ...getPreguntas('normas'),
-   ...getPreguntas('mecanica'),
-   ...getPreguntas('auxilios'),
-   ...getPreguntas('medioambiente')
+  ...getPreguntas('senales'),
+  ...getPreguntas('normas'),
+  ...getPreguntas('mecanica'),
+  ...getPreguntas('auxilios'),
+  ...getPreguntas('medioambiente')
   ];
 
   if(todas.length < 30) {
@@ -1847,6 +1847,7 @@ function prevTip(e) {
   mostrarTip();
 }
 
+// ===== TEMARIO - PDFs EN RAÍZ CON DESCARGA BAJO DEMANDA =====
 function cargarTemario() {
   const container = document.getElementById('temario-lista');
   if(!container) return;
@@ -1885,7 +1886,7 @@ async function abrirPDF(ruta, titulo) {
     }
   }
 
-  const blob = await response.blob();
+    const blob = await response.blob();
   const pdfUrl = URL.createObjectURL(blob);
 
   const modal = document.createElement('div');
