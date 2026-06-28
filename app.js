@@ -1,11 +1,65 @@
-// GASDRIVE DGT V9.6.2 ES - ADAPTADO A TU HTML
+// ========== GASDRIVE DGT V9.6.2 ES - BLOQUE DATOS ==========
+// === INICIO BLOQUE DATOS - NO TOCAR AL EDITAR LÓGICA ===
+// Aquí van TODOS tus bancos. Solo los pegas 1 vez y te olvidas.
+
+const DATOS = {
+  senales: [
+    // Pega aquí las 80 preguntas de senales.json
+    // Formato: {q: "¿Qué indica esta señal?", a: ["Ceda el paso", "Stop", "Peligro"], ok: 0, codigo: "R1"},
+  ],
+  normas: [
+    // Pega aquí las 100 preguntas de normas.json
+  ],
+  mecanica: [
+    // Pega aquí las 50 preguntas de mecanica.json
+  ],
+  auxilios: [
+    // Pega aquí las 40 preguntas de auxilios.json
+  ],
+  medioambiente: [
+    // Pega aquí las 30 preguntas de medioambiente.json
+  ],
+  situaciones: [
+    // Pega aquí los 100 casos de situaciones.json
+    // Formato: {q: "Llueve muy fuerte en autovía...", a: ["Frenar brusco", "Reducir velocidad", "Acelerar"], ok: 1, categoria: "clima"},
+  ]
+};
+
+const SENALES_SVG = {
+  // Pega aquí el contenido de senales_svg.js
+  // Formato: R1: '<svg viewBox="0 0 100 100">...</svg>',
+  // R2: '<svg viewBox="0 0 100 100">...</svg>',
+};
+
+const TIPS = [
+  // Pega aquí tus 100 tips
+  // Formato: {emoji:'🚗', txt:'Regla de los 2 segundos: mantén distancia'},
+];
+
+const COCHES = [
+  // Pega aquí tus 17 coches
+  // Formato: {id:'c1',nombre:'SEAT Ibiza',emoji:'🚗',precio:200,cv:90,color:''},
+];
+
+const ACCESORIOS = [
+  // Pega aquí tus 36 accesorios
+  // Formato: {id:'a1',nombre:'Turbo',emoji:'💨',precio:300,hp:50},
+];
+
+const EMOJI_TIENDA = [
+  // Pega aquí tus emojis de tienda
+  // Formato: {id:'e1',nombre:'Corona',emoji:'👑',precio:500},
+];
+// === FIN BLOQUE DATOS ===
+
+// ========== BLOQUE LÓGICA - ESTO SÍ ME LO PASAS CUANDO CAMBIEMOS FUNCIONES ==========
 const EMOJIS_ACIERTO = ['🚀','💎','👑','🔥','💯','⚡','🏆','🦄','🤑','✅','💪','😎','🎯','💥','🌟','🎉'];
 const EMOJIS_FALLO = ['❌','💀','😭','⛔','💔','😵','🤦','🚫','💩','🤡','💥','😤'];
 
 const cachePreguntas = {};
 let DATOS_LISTOS = false;
 
-// ===== SISTEMA DE CARGA NUEVO - ESTILO CHRONICLES =====
+// ===== SISTEMA DE CARGA NUEVO - SIN FETCH =====
 async function iniciarCarga() {
   const btn = document.getElementById('btn-empezar');
   const status = document.getElementById('intro-status');
@@ -14,7 +68,7 @@ async function iniciarCarga() {
 
   if(status) status.textContent = '📚 0/5 categorías';
 
-  // CARGA 1 A 1 CON FEEDBACK REAL - NO Promise.all
+  // SIN FETCH - Lectura directa de DATOS
   for (const cat of cats) {
     try {
       await getPreguntas(cat);
@@ -26,7 +80,7 @@ async function iniciarCarga() {
   }
 
   if (cargadas === 0) {
-    if(status) status.textContent = '❌ Error cargando datos. Revisa tu conexión';
+    if(status) status.textContent = '❌ Error: DATOS vacíos';
     if(btn) {
       btn.textContent = 'REINTENTAR';
       btn.disabled = false;
@@ -40,7 +94,6 @@ async function iniciarCarga() {
       btn.disabled = false;
       btn.onclick = entrarApp;
     } else {
-      // Si no hay pantalla intro, entrar directo
       entrarApp();
     }
   }
@@ -55,957 +108,28 @@ function entrarApp() {
   init();
 }
 
-// ===== ESTADO GLOBAL =====
-let tipsData = [];
-let currentTip = 0;
-let sitCategoriaActiva = 'clima';
-
-let estado = {
-  coins: parseInt(localStorage.getItem('gd_coins')) || 0,
-  coches: JSON.parse(localStorage.getItem('gd_coches')) || ['c1'],
-  accesorios: JSON.parse(localStorage.getItem('gd_accesorios')) || [],
-  emojis: JSON.parse(localStorage.getItem('gd_emojis')) || [],
-  test: {
-    senales: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
-    normas: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
-    mecanica: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
-    auxilios: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null},
-    medioambiente: {idx:0,aciertos:0,racha:0,puntuacion:0,current:null,preguntasBarajadas:null}
-  },
-  examen: {
-    activa: false,
-    preguntas: [],
-    index: 0,
-    aciertos: 0,
-    fallos: 0,
-    timer: null,
-    tiempo: 1800
-  },
-  sit: {
-    clima: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null},
-    urbano: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null},
-    carretera: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null},
-    emergencia: {idx:0,aciertos:0,puntuacion:0,current:null,casosBarajados:null}
-  }
-};
-
-const TIPS = [
-  {emoji:'🚗', txt:'Regla de los 2 segundos: mantén distancia con el coche de delante'},
-  {emoji:'👀', txt:'Mira 12 segundos hacia delante, no solo el coche de delante'},
-  {emoji:'🌧️', txt:'Lluvia: aumenta distancia x2 y reduce velocidad'},
-  {emoji:'🌙', txt:'De noche reduce velocidad un 10-15%'},
-  {emoji:'🚙', txt:'Adelanta solo cuando veas 200m libres'},
-  {emoji:'🛑', txt:'STOP significa parada total, no frenada'},
-  {emoji:'⚠️', txt:'Cede el paso a los peatones en el paso de cebra'},
-  {emoji:'💡', txt:'Usa los intermitentes 3 segundos antes de girar'},
-  {emoji:'🛣️', txt:'Velocidad máxima en autovía: 120 km/h'},
-  {emoji:'🏙️', txt:'Velocidad máxima en ciudad: 50 km/h'},
-  {emoji:'🚸', txt:'Cerca de colegios baja a 30 km/h'},
-  {emoji:'🍺', txt:'Alcohol y conducción no son compatibles. 0,0 es seguro'},
-  {emoji:'😴', txt:'Si tienes sueño, para y descansa. 15 min lo cambian todo'},
-  {emoji:'📱', txt:'No uses el móvil mientras conduces'},
-  {emoji:'🪞', txt:'Regula los espejos antes de salir'},
-  {emoji:'🎒', txt:'Ponte el cinturón aunque sean 2 min'},
-  {emoji:'👶', txt:'Niños <135cm deben ir con SRI adecuado'},
-  {emoji:'🐶', txt:'Animales bien sujetos en el coche'},
-  {emoji:'🧳', txt:'Carga bien repartida y sujeta'},
-  {emoji:'🚲', txt:'Deja 1,5m al adelantar ciclistas'},
-  {emoji:'🔄', txt:'En rotonda, quien está dentro tiene preferencia'},
-  {emoji:'🚦', txt:'Ámbar intermitente = precaución máxima'},
-  {emoji:'🚑', txt:'Cede paso a vehículos de emergencia con luces'},
-  {emoji:'🌫️', txt:'Niebla: antiniebla + cortas, nunca largas'},
-  {emoji:'❄️', txt:'Hielo: marchas largas, frena suave, sin volantazos'},
-  {emoji:'🛞', txt:'Neumático liso = multa + riesgo aquaplaning'},
-  {emoji:'💨', txt:'Distancia lateral al adelantar bici: 1.5m mínimo'},
-  {emoji:'🚧', txt:'Línea continua = no adelantar, nunca'},
-  {emoji:'🅿️', txt:'Aparcar en cuesta: ruedas giradas a la acera'},
-  {emoji:'🔦', txt:'En túnel: enciende luces de cruce'},
-  {emoji:'⚡', txt:'Coche eléctrico: silencioso, vigila peatones'},
-  {emoji:'🔧', txt:'Testigo aceite rojo = para el motor YA'},
-  {emoji:'🌡️', txt:'Motor caliente: no abras el tapón del refrigerante'},
-  {emoji:'⛽', txt:'Reserva = 50km aprox, no juegues con eso'},
-  {emoji:'🧠', txt:'Cada fallo te enseña. Vuelve a repasarlo'},
-  {emoji:'🎯', txt:'Lee TODA la pregunta antes de responder'},
-  {emoji:'⏱️', txt:'No tengas prisa, el examen no es una carrera'},
-  {emoji:'📖', txt:'Repite los errores hasta que no los vuelvas a hacer'},
-  {emoji:'🚙', txt:'En cuesta estrecha, sube tiene preferencia'},
-  {emoji:'🌉', txt:'En puentes estrechos, cede si estás más cerca'},
-  {emoji:'🚂', txt:'Paso a nivel: barrera bajada = parada obligatoria'},
-  {emoji:'🚛', txt:'Camión girando: no te metas por el lado'},
-  {emoji:'🚌', txt:'Bus saliendo de parada: facilítale la salida'},
-  {emoji:'🏍️', txt:'Moto entre carriles: mantén distancia'},
-  {emoji:'🦓', txt:'Paso de peatones elevado: reduce aún más'},
-  {emoji:'🌳', txt:'Hojas en el suelo = asfalto resbaladizo'},
-  {emoji:'💦', txt:'Charco grande: reduce y sujeta el volante'},
-  {emoji:'💨', txt:'Viento lateral: sujeta fuerte el volante'},
-  {emoji:'🚨', txt:'Conductor novel: L detrás 1 año'},
-  {emoji:'👓', txt:'Si usas gafas, llévalas siempre'},
-  {emoji:'🧤', txt:'Guantes en moto = menos lesiones en manos'},
-  {emoji:'🪖', txt:'Casco bien abrochado salva vidas'},
-  {emoji:'🔊', txt:'Música alta = menos atención'},
-  {emoji:'🍕', txt:'Come antes de conducir largo, no durante'},
-  {emoji:'💊', txt:'Medicamentos con somnolencia = no conducir'},
-  {emoji:'🅰️', txt:'Señal A detrás si no llegas a 60km/h'},
-  {emoji:'🚜', txt:'Tractor: paciencia, adelantará cuando pueda'},
-  {emoji:'🐴', txt:'Animal en vía: para, no toques el claxon'},
-  {emoji:'🏁', txt:'Final autovía: cede al incorporarte'},
-  {emoji:'🅾️', txt:'Zona ORA: mira panel antes de aparcar'},
-  {emoji:'🅿️', txt:'Park & Ride: aparca fuera, entra en bus'},
-  {emoji:'🅱️', txt:'Carril bus: prohibido excepto taxis/bicis'},
-  {emoji:'🚲', txt:'Carril bici: nunca aparcar ni circular'},
-  {emoji:'🛑', txt:'Ceda el paso = reduce y mira a ambos lados'},
-  {emoji:'🔀', txt:'Cambio carril: espejo + ángulo muerto + intermitente'},
-  {emoji:'🅾️', txt:'Obstrucción: avisa con triángulos si paras'},
-  {emoji:'🚗', txt:'Coche parado arcén: pasa lento y con precaución'},
-  {emoji:'🌉', txt:'Túnel largo: mantén distancia y luces encendidas'},
-  {emoji:'🚧', txt:'Obras: respeta señales provisionales'},
-  {emoji:'🔄', txt:'Cambio sentido: solo donde está permitido'},
-  {emoji:'🅿️', txt:'Marcha atrás: solo imprescindible y corto'},
-  {emoji:'🚙', txt:'Adelantamiento: termínalo rápido y seguro'},
-  {emoji:'⛔', txt:'No entrar: círculo rojo = prohibido pasar'},
-  {emoji:'🚦', txt:'Semáforo con flecha: sigue la flecha'},
-  {emoji:'🛑', txt:'STOP sin línea: para antes de la intersección'},
-  {emoji:'🚸', txt:'Colegio: 30km/h cuando hay niños'},
-  {emoji:'🌙', txt:'Luces de posición no sirven de noche'},
-  {emoji:'💡', txt:'Luces largas: apaga a 150m de otro'},
-  {emoji:'🚨', txt:'Avería: chaleco + triángulos a 50m'},
-  {emoji:'🧯', txt:'Extintor: revisa fecha caducidad'},
-  {emoji:'🛞', txt:'Repuesto: comprueba presión cada mes'},
-  {emoji:'🔋', txt:'Batería: limpia bornes si cuesta arrancar'},
-  {emoji:'💧', txt:'Líquido limpia: nunca solo agua'},
-  {emoji:'🌡️', txt:'Temperatura alta: para y espera a enfriar'},
-  {emoji:'🛢️', txt:'Aceite: nivel entre mín y máx'},
-  {emoji:'🚗', txt:'Retrovisores: ver justo un poco de carrocería'},
-  {emoji:'🪑', txt:'Asiento: rodillas flexionadas, brazos relajados'},
-  {emoji:'🎒', txt:'Objetos sueltos = proyectiles en choque'},
-  {emoji:'👶', txt:'SRI: grupo 0 hasta 13kg, de espaldas a la marcha'},
-  {emoji:'🐾', txt:'Perro: arnés o transportín, nunca suelto'},
-  {emoji:'🧳', txt:'Maletero: peso bajo y bien sujeto'},
-  {emoji:'🚗', txt:'Distancia con camión: más del doble'},
-  {emoji:'🌧️', txt:'Aquaplaning: no frenes, reduce gas'},
-  {emoji:'❄️', txt:'Nieve: cadenas o neumáticos M+S'},
-  {emoji:'💨', txt:'Ráfaga viento: sujeta volante y reduce'},
-  {emoji:'🚙', txt:'Frena con motor en bajada larga'},
-  {emoji:'🅾️', txt:'Zona 30: peatones pueden ir por calzada'},
-  {emoji:'🚦', txt:'Flecha verde: tienes preferencia'},
-  {emoji:'🚸', txt:'Policía regulando: obedece gestos'},
-  {emoji:'🚗', txt:'Repasa errores cada día 10 min'},
-  {emoji:'🏆', txt:'¡Tú puedes sacarte el carnet!'}
-];
-
-const COCHES = [
-  {id:'c1',nombre:'SEAT Ibiza',emoji:'🚗',precio:200,cv:90,color:''},
-  {id:'c2',nombre:'VW Golf GTI',emoji:'🚘',precio:800,cv:220,color:''},
-  {id:'c3',nombre:'BMW M3',emoji:'🚙',precio:1500,cv:420,color:''},
-  {id:'c4',nombre:'Tesla Model S',emoji:'⚡',precio:2000,cv:670,color:'hue-rotate(210deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #00d4ff)'},
-  {id:'c5',nombre:'Porsche 911',emoji:'🏎️',precio:2500,cv:450,color:'hue-rotate(130deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #00ff88)'},
-  {id:'c6',nombre:'Bugatti Chiron',emoji:'🏎️',precio:5000,cv:1500,color:'hue-rotate(200deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #00c8ff)'},
-  {id:'c7',nombre:'Yamaha R1',emoji:'🏍️',precio:2200,cv:200,color:'hue-rotate(55deg) saturate(2.5) brightness(1.3) drop-shadow(0 0 8px #ffdd00)'},
-  {id:'c8',nombre:'Ducati Panigale',emoji:'🏍️',precio:2800,cv:220,color:'hue-rotate(25deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #ff8800)'},
-  {id:'c9',nombre:'Audi RS6',emoji:'🏎️',precio:3200,cv:600,color:'hue-rotate(180deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #00ffff)'},
-  {id:'c10',nombre:'Nissan GTR',emoji:'🏎️',precio:3500,cv:565,color:'hue-rotate(90deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #88ff00)'},
-  {id:'c11',nombre:'McLaren 720S',emoji:'🏎️',precio:4200,cv:720,color:'hue-rotate(15deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #ff6600)'},
-  {id:'c12',nombre:'Ferrari SF90 Stradale',emoji:'🏎️',precio:8500,cv:1000,color:'hue-rotate(0deg) saturate(2.5) brightness(1.3) drop-shadow(0 0 10px #ff0000)'},
-  {id:'c13',nombre:'Lamborghini Aventador SVJ',emoji:'🏎️',precio:8000,cv:770,color:'hue-rotate(55deg) saturate(2.5) brightness(1.3) drop-shadow(0 0 10px #ffdd00)'},
-  {id:'c14',nombre:'Koenigsegg Jesko Absolut',emoji:'🏎️',precio:14000,cv:1600,color:'hue-rotate(270deg) saturate(2.5) brightness(1.3) drop-shadow(0 0 10px #aa00ff)'},
-  {id:'c15',nombre:'Porsche 918 Spyder',emoji:'🏎️',precio:9500,cv:887,color:'hue-rotate(130deg) saturate(2.5) brightness(1.3) drop-shadow(0 0 10px #00ff88)'},
-  {id:'c16',nombre:'McLaren P1 GTR',emoji:'🏎️',precio:9000,cv:916,color:'hue-rotate(35deg) saturate(2.5) brightness(1.3) drop-shadow(0 0 10px #ff8800)'},
-  {id:'c17',nombre:'Bugatti Bolide',emoji:'🏎️',precio:16000,cv:1825,color:'hue-rotate(200deg) saturate(2.5) brightness(1.3) drop-shadow(0 0 10px #00d4ff)'}
-];
-
-const ACCESORIOS = [
-  {id:'a1',nombre:'Turbo',emoji:'💨',precio:300,hp:50},
-  {id:'a2',nombre:'Nitro',emoji:'🔥',precio:600,hp:80},
-  {id:'a3',nombre:'Motor Electrico',emoji:'⚡',precio:800,hp:100},
-  {id:'a4',nombre:'Kit Mecanico',emoji:'🛠️',precio:400,hp:40},
-  {id:'a5',nombre:'Herramientas Racing',emoji:'🔧',precio:250,hp:20},
-  {id:'a6',nombre:'Cadena Reforzada',emoji:'⛓️',precio:350,hp:30},
-  {id:'a7',nombre:'Engranajes Sport',emoji:'⚙️',precio:300,hp:25},
-  {id:'a8',nombre:'Tornillos Racing',emoji:'🔩',precio:200,hp:15},
-  {id:'a9',nombre:'Neumaticos Slick',emoji:'🛞',precio:400,hp:35},
-  {id:'a10',nombre:'Neumaticos Lluvia',emoji:'🛞',precio:350,hp:30},
-  {id:'a11',nombre:'Cadenas Nieve',emoji:'❄️',precio:300,hp:25},
-  {id:'a12',nombre:'Llantas Racing',emoji:'🔲',precio:500,hp:40},
-  {id:'a13',nombre:'Eje Equilibrado',emoji:'🎯',precio:250,hp:20},
-  {id:'a14',nombre:'Aleron GT',emoji:'🔰',precio:400,hp:40},
-  {id:'a15',nombre:'Aleron F1',emoji:'🏁',precio:700,hp:70},
-  {id:'a16',nombre:'Cristales Tintados',emoji:'🪟',precio:200,hp:10},
-  {id:'a17',nombre:'Luces LED',emoji:'💡',precio:250,hp:15},
-  {id:'a18',nombre:'Faros Laser',emoji:'🔦',precio:600,hp:50},
-  {id:'a19',nombre:'Retrovisor Racing',emoji:'🪞',precio:200,hp:10},
-  {id:'a20',nombre:'Defensa Reforzada',emoji:'🛡️',precio:450,hp:35},
-  {id:'a21',nombre:'Asiento Bucket',emoji:'🪑',precio:400,hp:25},
-  {id:'a22',nombre:'Volante Racing',emoji:'🎛️',precio:350,hp:20},
-  {id:'a23',nombre:'Cuadro Digital',emoji:'📊',precio:500,hp:30},
-  {id:'a24',nombre:'Guantes Piloto',emoji:'🧤',precio:150,hp:10},
-  {id:'a25',nombre:'Casco Racing',emoji:'🪖',precio:300,hp:15},
-  {id:'a26',nombre:'Intercom',emoji:'🎧',precio:250,hp:10},
-  {id:'a27',nombre:'Vinilo Llamas',emoji:'🎨',precio:300,hp:10},
-  {id:'a28',nombre:'Vinilo Cromo',emoji:'🌈',precio:500,hp:15},
-  {id:'a29',nombre:'Pintura Metalizada',emoji:'✨',precio:600,hp:20},
-  {id:'a30',nombre:'Cristales Swarovski',emoji:'💎',precio:1000,hp:5},
-  {id:'a31',nombre:'Corona Royal',emoji:'👑',precio:800,hp:10},
-  {id:'a32',nombre:'Unicornio',emoji:'🦄',precio:1200,hp:5},
-  {id:'a33',nombre:'Cohete',emoji:'🚀',precio:600,hp:15},
-  {id:'a34',nombre:'Diamante',emoji:'💎',precio:1200,hp:5},
-  {id:'a35',nombre:'Rayo',emoji:'⚡',precio:700,hp:20},
-  {id:'a36',nombre:'Fuego',emoji:'🔥',precio:500,hp:15}
-];
-
-const EMOJI_TIENDA = [
-  {id:'e1',nombre:'Corona',emoji:'👑',precio:500},
-  {id:'e2',nombre:'Diamante',emoji:'💎',precio:800},
-  {id:'e3',nombre:'Fuego',emoji:'🔥',precio:300},
-  {id:'e4',nombre:'Rayo',emoji:'⚡',precio:400},
-  {id:'e5',nombre:'Unicornio',emoji:'🦄',precio:1000}
-];
-
-// ===== HELPERS =====
+// ===== HELPERS NUEVOS - SIN FETCH =====
 function getPreguntas(cat) {
   if (cachePreguntas[cat]) return Promise.resolve(cachePreguntas[cat]);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3000);
-  return fetch(`./content/preguntas/${cat}.json`, { signal: controller.signal })
-.then(r => {
-      clearTimeout(timeout);
-      if (!r.ok) throw new Error(`No se encontró ${cat}.json`);
-      return r.json();
-    })
-.then(data => {
-      cachePreguntas[cat] = data;
-      return data;
-    })
-.catch(err => {
-      clearTimeout(timeout);
-      console.error(`Error ${cat}:`, err);
-      cachePreguntas[cat] = [];
-      return [];
-    });
+  const datos = DATOS[cat] || [];
+  cachePreguntas[cat] = datos;
+  return Promise.resolve(datos);
 }
 
-async function getSituaciones(cat) {
+function getSituaciones(cat) {
   const key = `sit_${cat}`;
-  if (cachePreguntas[key]) return cachePreguntas[key];
-  try {
-    const res = await fetch(`./content/casos/situaciones.json`);
-    const data = await res.json();
-    const filtrado = data.filter(s => s.categoria === cat);
-    cachePreguntas[key] = filtrado;
-    return filtrado;
-  } catch (err) {
-    console.error(`Error cargando situaciones:`, err);
-    return [];
-  }
+  if (cachePreguntas[key]) return Promise.resolve(cachePreguntas[key]);
+  const datos = DATOS.situaciones.filter(s => s.categoria === cat);
+  cachePreguntas[key] = datos;
+  return Promise.resolve(datos);
 }
 
 function getSVG(id) {
   if (typeof SENALES_SVG!== 'undefined' && SENALES_SVG[id]) {
     return SENALES_SVG[id];
   }
-  return `<img src="./data/svg/${id}.svg" style="max-width:100%;height:auto">`;
+  return '';
 }
 
-function barajarArray(arr) {
-  const a = [...arr];
-  for(let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// ===== INIT =====
-function init() {
-  console.log("GasDrive V9.6.2 ES cargado");
-  actualizarCoins();
-  cargarPregunta('senales');
-  cargarPregunta('normas');
-  cargarPregunta('mecanica');
-  cargarPregunta('auxilios');
-  cargarPregunta('medioambiente');
-  cargarCasos();
-  actualizarMensajeMotivacional();
-}
-
-function guardar() {
-  localStorage.setItem('gd_coins', estado.coins);
-  localStorage.setItem('gd_coches', JSON.stringify(estado.coches));
-  localStorage.setItem('gd_accesorios', JSON.stringify(estado.accesorios));
-  localStorage.setItem('gd_emojis', JSON.stringify(estado.emojis));
-}
-
-function actualizarCoins() {
-  const el = document.getElementById('coins');
-  if(el) el.textContent = `💰 ${estado.coins}`;
-}
-
-function mostrarEmoji(acierto, element) {
-  const lista = acierto? EMOJIS_ACIERTO : EMOJIS_FALLO;
-  const emoji = lista[Math.floor(Math.random() * lista.length)];
-  const span = document.createElement('span');
-  span.textContent = emoji;
-  span.style.cssText = 'position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:32px;animation:bounceIn 0.4s;pointer-events:none;z-index:999;';
-  element.style.position = 'relative';
-  element.appendChild(span);
-  setTimeout(() => span.remove(), 600);
-  if(navigator.vibrate) navigator.vibrate(acierto? [30,20,30] : 100);
-}
-
-// ===== TABS =====
-function cambiarTab(tab, e) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  e.currentTarget.classList.add('active');
-  if(tab === 'garage') cargarGaraje();
-  if(tab === 'tienda') cargarTienda();
-  if(tab === 'tips') cargarTips();
-  if(tab === 'temario') cargarTemario();
-  if(tab === 'test') cargarPregunta('senales');
-  if(tab === 'situaciones') cargarCasos();
-}
-
-function cambiarSubTab(e, tab, sub) {
-  const tabId = tab === 'sit'? 'situaciones' : tab;
-  const contenedor = document.getElementById('tab-' + tabId);
-  if(!contenedor) return;
-  contenedor.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-  contenedor.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
-  e.target.classList.add('active');
-  document.getElementById(`${tab === 'test'? 'test' : 'sit'}-${sub}`).classList.add('active');
-  if(tab === 'test') cargarPregunta(sub);
-  if(tab === 'sit') cargarSituacion(sub);
-}
-
-function cambiarCategoriaSit(cat) {
-  sitCategoriaActiva = cat;
-  document.querySelectorAll('#tab-situaciones.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
-  if(event && event.target) event.target.classList.add('active');
-  const titulos = {
-    clima: '🌧️ CASOS REALES - CLIMA ADVERSO',
-    urbano: '🏙️ CASOS REALES - URBANO',
-    carretera: '🛣️ CASOS REALES - CARRETERA',
-    emergencia: '🚨 CASOS REALES - EMERGENCIA'
-  };
-  document.getElementById('sit-titulo').textContent = titulos[cat];
-  estado.sit[cat].idx = 0;
-  cargarSituacion(cat);
-}
-
-// ===== TEST - ANTAGÓNICAS + PLACEHOLDER GRID =====
-async function cargarPregunta(cat) {
-  const s = estado.test[cat];
-
-  if (!s.preguntasBarajadas) {
-    const todas = await getPreguntas(cat);
-    if (!todas || todas.length === 0) {
-      const preguntaEl = document.getElementById(`test-${cat}-pregunta`);
-      if(preguntaEl) preguntaEl.textContent = `Error: No hay preguntas de ${cat}`;
-      return;
-    }
-    s.preguntasBarajadas = barajarArray([...todas]);
-    s.totalPreguntas = s.preguntasBarajadas.length;
-  }
-
-  const pOriginal = s.preguntasBarajadas[s.idx % s.totalPreguntas];
-  if (!pOriginal) return;
-
-  const opcionesOriginales = pOriginal.a || pOriginal.opciones || [];
-  const opcionesBarajadas = barajarArray([...opcionesOriginales]);
-  const indiceOriginal = pOriginal.ok!== undefined? pOriginal.ok : pOriginal.respuesta_correcta;
-  const textoCorrecto = opcionesOriginales[indiceOriginal];
-  const nuevoIndexCorrecto = opcionesBarajadas.indexOf(textoCorrecto);
-
-  const p = {...pOriginal, a: opcionesBarajadas, ok: nuevoIndexCorrecto};
-  s.current = p;
-
-  const preguntaEl = document.getElementById(`test-${cat}-pregunta`);
-  if(!preguntaEl) return;
-
-  preguntaEl.textContent = p.q || p.pregunta || '';
-  document.getElementById(`test-${cat}-aciertos`).textContent = s.aciertos;
-  document.getElementById(`test-${cat}-racha`).textContent = s.racha;
-  document.getElementById(`test-${cat}-score`).textContent = s.puntuacion;
-  document.getElementById(`test-${cat}-progress`).style.width = `${((s.idx % s.totalPreguntas) / s.totalPreguntas) * 100}%`;
-
-  const imgCont = document.getElementById(`test-${cat}-imagen`);
-  if(imgCont) {
-    if(cat === 'senales' && (p.codigo || p.codigo_dgt)) {
-      const svg = getSVG(p.codigo || p.codigo_dgt);
-      imgCont.innerHTML = svg || '';
-      imgCont.classList.remove('placeholder');
-      imgCont.style.display = svg? 'block' : 'none';
-    } else {
-      imgCont.innerHTML = '';
-      imgCont.classList.add('placeholder');
-      imgCont.style.display = 'flex';
-    }
-  }
-
-  const cont = document.getElementById(`test-${cat}-opciones`);
-  if(!cont) return;
-
-  cont.innerHTML = '';
-  document.getElementById(`test-${cat}-feedback`).textContent = '';
-  document.getElementById(`btn-sig-test-${cat}`).disabled = true;
-
-  p.a.forEach((txt, i) => {
-    const div = document.createElement('div');
-    div.className = 'opcio';
-    div.textContent = txt;
-    div.onclick = function() { responderTest(cat, i, this); };
-    cont.appendChild(div);
-  });
-
-  const motEl = document.getElementById('motivacion');
-  if(motEl && motEl.textContent === 'Cargando datos...') {
-    actualizarMensajeMotivacional();
-  }
-}
-
-function responderTest(cat, idx, el) {
-  const s = estado.test[cat];
-  const p = s.current;
-  const cont = document.getElementById(`test-${cat}-opciones`);
-  if(cont.querySelector('.correcta') || cont.querySelector('.incorrecta')) return;
-  cont.querySelectorAll('.opcio').forEach(o => o.classList.add('bloquejada'));
-
-  const correcto = idx === p.ok;
-  if(correcto) {
-    el.classList.add('correcta');
-    s.aciertos++;
-    s.racha++;
-    s.puntuacion += 10 + (s.racha * 2);
-    estado.coins += 5;
-    document.getElementById(`test-${cat}-feedback`).className = 'feedback acierto';
-    document.getElementById(`test-${cat}-feedback`).textContent = `✅ ¡CORRECTO! +${10+(s.racha*2)} pts`;
-    mostrarEmoji(true, el);
-  } else {
-    el.classList.add('incorrecta');
-    cont.querySelectorAll('.opcio')[p.ok]?.classList.add('correcta');
-    document.getElementById(`test-${cat}-feedback`).className = 'feedback fallo';
-    document.getElementById(`test-${cat}-feedback`).textContent = '❌ FALLO';
-    mostrarEmoji(false, el);
-    s.racha = 0;
-  }
-  document.getElementById(`btn-sig-test-${cat}`).disabled = false;
-  actualizarCoins();
-  guardar();
-}
-
-function siguienteTest(e, cat) {
-  estado.test[cat].idx++;
-  cargarPregunta(cat);
-}
-
-// ===== MOSTRAR PISTA IRIS =====
-export function mostrarPista(cat){
-  if(estado.coins < 5) {
-    mostrarModal('💰 No tienes monedas suficientes. Necesitas 5 monedas.');
-    return;
-  }
-  const s = estado.test[cat];
-  const p = s.current;
-  const pistaDiv = document.getElementById(`test-${cat}-pista`);
-  
-  estado.coins -= 5;
-  pistaDiv.textContent = p.pista || p.explicacion || '💡 Lee bien todas las opciones antes de responder';
-  pistaDiv.classList.add('activa');
-  actualizarCoins();
-  guardar();
-}
-
-// ===== CASOS - ANTAGÓNICAS CORREGIDO =====
-async function cargarSituacion(cat) {
-  if(!cat) cat = sitCategoriaActiva;
-  const s = estado.sit[cat];
-
-  if (!s.casosBarajados) {
-    const todos = await getSituaciones(cat);
-    if (!todos || todos.length === 0) {
-      const preguntaEl = document.getElementById(`sit-${cat}-pregunta`);
-      if(preguntaEl) preguntaEl.textContent = `Error: No hay casos de ${cat}`;
-      return;
-    }
-    s.casosBarajados = barajarArray([...todos]);
-    s.totalCasos = s.casosBarajados.length;
-  }
-
-  const pOriginal = s.casosBarajados[s.idx % s.totalCasos];
-  if (!pOriginal) return;
-
-  const opcionesOriginales = pOriginal.a || [];
-  const opcionesBarajadas = barajarArray([...opcionesOriginales]);
-  const textoCorrecto = opcionesOriginales[pOriginal.ok];
-  const nuevoIndexCorrecto = opcionesBarajadas.indexOf(textoCorrecto);
-
-  const p = {...pOriginal, a: opcionesBarajadas, ok: nuevoIndexCorrecto};
-  s.current = p;
-
-  const preguntaEl = document.getElementById(`sit-${cat}-pregunta`);
-  if(!preguntaEl) return;
-
-  preguntaEl.textContent = p.q || '';
-  document.getElementById(`sit-${cat}-aciertos`).textContent = s.aciertos;
-  document.getElementById(`sit-${cat}-score`).textContent = s.puntuacion;
-  document.getElementById(`sit-${cat}-progress`).style.width = `${((s.idx % s.totalCasos) / s.totalCasos) * 100}%`;
-
-  const cont = document.getElementById(`sit-${cat}-opciones`);
-  if(!cont) return;
-
-  cont.innerHTML = '';
-  document.getElementById(`sit-${cat}-feedback`).textContent = '';
-  document.getElementById(`btn-sig-sit-${cat}`).disabled = true;
-
-  p.a.forEach((txt, i) => {
-    const div = document.createElement('div');
-    div.className = 'opcio';
-    div.textContent = txt;
-    div.onclick = function() { responderSituacion(cat, i, this); };
-    cont.appendChild(div);
-  });
-}
-
-function responderSituacion(cat, idx, el) {
-  const s = estado.sit[cat];
-  const p = s.current;
-  const cont = document.getElementById(`sit-${cat}-opciones`);
-  if(cont.querySelector('.correcta') || cont.querySelector('.incorrecta')) return;
-  cont.querySelectorAll('.opcio').forEach(o => o.classList.add('bloquejada'));
-
-  const correcto = idx === p.ok;
-  if(correcto) {
-    el.classList.add('correcta');
-    s.aciertos++;
-    s.puntuacion += 15;
-    estado.coins += 10;
-    document.getElementById(`sit-${cat}-feedback`).className = 'feedback acierto';
-    document.getElementById(`sit-${cat}-feedback`).textContent = `✅ ¡CORRECTO! +15 pts`;
-    mostrarEmoji(true, el);
-  } else {
-    el.classList.add('incorrecta');
-    cont.querySelectorAll('.opcio')[p.ok]?.classList.add('correcta');
-    document.getElementById(`sit-${cat}-feedback`).className = 'feedback fallo';
-    document.getElementById(`sit-${cat}-feedback`).textContent = '❌ FALLO';
-    mostrarEmoji(false, el);
-  }
-  document.getElementById(`btn-sig-sit-${cat}`).disabled = false;
-  actualizarCoins();
-  guardar();
-}
-
-function siguienteSituacion(e, cat) {
-  estado.sit[cat].idx++;
-  cargarSituacion(cat);
-}
-
-// ===== EXAMEN OFICIAL =====
-async function iniciarExamen(e) {
-  const todas = [
-...await getPreguntas('senales'),
-...await getPreguntas('normas'),
-...await getPreguntas('mecanica'),
-...await getPreguntas('auxilios'),
-...await getPreguntas('medioambiente')
-  ];
-
-  if(todas.length < 30) {
-    alert('Faltan preguntas. Necesitas 30 mínimo.');
-    return;
-  }
-
-  estado.examen.preguntas = barajarArray(todas).slice(0, 30);
-  estado.examen.index = 0;
-  estado.examen.aciertos = 0;
-  estado.examen.fallos = 0;
-  estado.examen.tiempo = 1800;
-
-  document.getElementById('btn-iniciar-examen').style.display = 'none';
-  document.getElementById('btn-sig-examen').style.display = 'block';
-  document.getElementById('examen-resultado').style.display = 'none';
-
-  iniciarTimerExamen();
-  cargarPreguntaExamen();
-}
-
-function iniciarTimerExamen() {
-  clearInterval(estado.examen.timer);
-  estado.examen.timer = setInterval(() => {
-    estado.examen.tiempo--;
-    const min = Math.floor(estado.examen.tiempo / 60);
-    const seg = estado.examen.tiempo % 60;
-    document.getElementById('examen-timer').textContent =
-      `${min.toString().padStart(2,'0')}:${seg.toString().padStart(2,'0')}`;
-    if(estado.examen.tiempo <= 0) finalizarExamen();
-  }, 1000);
-}
-
-// ===== EXAMEN CON PLACEHOLDER GRID =====
-function cargarPreguntaExamen() {
-  if(estado.examen.index >= 30) return finalizarExamen();
-
-  const pOriginal = estado.examen.preguntas[estado.examen.index];
-  const opcionesBarajadas = barajarArray(pOriginal.a || pOriginal.opciones);
-  const textoCorrecto = (pOriginal.a || pOriginal.opciones)[pOriginal.ok!== undefined? pOriginal.ok : pOriginal.respuesta_correcta];
-  const nuevoIndexCorrecto = opcionesBarajadas.indexOf(textoCorrecto);
-  const p = {...pOriginal, a: opcionesBarajadas, ok: nuevoIndexCorrecto};
-  estado.examen.preguntas[estado.examen.index] = p;
-
-  document.getElementById('examen-num').textContent = estado.examen.index + 1;
-  document.getElementById('examen-aciertos').textContent = estado.examen.aciertos;
-  document.getElementById('examen-progress').style.width = `${(estado.examen.index/30)*100}%`;
-
-  const cont = document.getElementById('examen-pregunta');
-  const opCont = document.getElementById('examen-opciones');
-  const imgCont = document.getElementById('examen-imagen');
-
-  if(!cont ||!opCont) return;
-
-  cont.textContent = p.q || p.pregunta;
-  opCont.innerHTML = '';
-
-  if((p.codigo || p.codigo_dgt) && imgCont) {
-    imgCont.innerHTML = getSVG(p.codigo || p.codigo_dgt);
-    imgCont.classList.remove('placeholder');
-    imgCont.style.display = 'block';
-  } else if(imgCont) {
-    imgCont.innerHTML = '';
-    imgCont.classList.add('placeholder');
-    imgCont.style.display = 'flex';
-  }
-
-  p.a.forEach((txt, i) => {
-    const div = document.createElement('div');
-    div.className = 'opcio';
-    div.textContent = txt;
-    div.onclick = () => responderExamen(i);
-    opCont.appendChild(div);
-  });
-
-  document.getElementById('btn-sig-examen').disabled = true;
-}
-
-function responderExamen(idx) {
-  const p = estado.examen.preguntas[estado.examen.index];
-  const ops = document.querySelectorAll('#examen-opciones.opcio');
-  if(ops[0].classList.contains('bloquejada')) return;
-
-  ops.forEach(o => o.classList.add('bloquejada'));
-
-  if(idx === p.ok) {
-    ops[idx].classList.add('correcta');
-    estado.examen.aciertos++;
-    estado.coins += 20;
-    mostrarEmoji(true, ops[idx]);
-  } else {
-    ops[idx].classList.add('incorrecta');
-    ops[p.ok].classList.add('correcta');
-    estado.examen.fallos++;
-    mostrarEmoji(false, ops[idx]);
-  }
-
-  document.getElementById('btn-sig-examen').disabled = false;
-  document.getElementById('examen-aciertos').textContent = estado.examen.aciertos;
-  actualizarCoins();
-  guardar();
-}
-
-function siguientePreguntaExamen(e) {
-  estado.examen.index++;
-  if(estado.examen.index >= 30) {
-    finalizarExamen();
-  } else {
-    cargarPreguntaExamen();
-  }
-}
-
-function finalizarExamen() {
-  clearInterval(estado.examen.timer);
-  const nota = estado.examen.aciertos;
-  const aprobado = nota >= 27;
-  const res = document.getElementById('examen-resultado');
-  res.style.display = 'block';
-
-  if(aprobado) {
-    res.innerHTML = `
-      <h2 style="color:#2ecc71">✅ ¡APROBADO!</h2>
-      <p style="font-size:24px">${nota}/30</p>
-      <p>Aciertos: ${nota} | Fallos: ${estado.examen.fallos}</p>
-      <p>Has ganado +${nota*20} coins</p>
-      <button class="btn" onclick="reiniciarExamen()">Hacer otro examen</button>
-    `;
-    estado.coins += nota * 20;
-  } else {
-    res.innerHTML = `
-      <h2 style="color:#e74c3c">❌ SUSPENSO</h2>
-      <p style="font-size:24px">${nota}/30</p>
-      <p>Aciertos: ${nota} | Fallos: ${estado.examen.fallos}</p>
-      <p>Necesitas 27 aciertos mínimo</p>
-      <button class="btn" onclick="reiniciarExamen()">Volver a probar</button>
-    `;
-  }
-
-  document.getElementById('btn-sig-examen').style.display = 'none';
-  actualizarCoins();
-  guardar();
-}
-
-function reiniciarExamen() {
-  document.getElementById('examen-resultado').style.display = 'none';
-  document.getElementById('btn-iniciar-examen').style.display = 'block';
-  document.getElementById('btn-sig-examen').style.display = 'none';
-  document.getElementById('examen-pregunta').textContent = "Pulsa Iniciar Examen";
-  document.getElementById('examen-opciones').innerHTML = '';
-  document.getElementById('examen-num').textContent = '0';
-  document.getElementById('examen-aciertos').textContent = '0';
-  document.getElementById('examen-progress').style.width = '0%';
-  document.getElementById('examen-timer').textContent = '30:00';
-  const imgExamen = document.getElementById('examen-imagen');
-  if(imgExamen) imgExamen.innerHTML = '';
-}
-
-// ===== CASOS - CARGAR LISTA =====
-async function cargarCasos() {
-  const categorias = ['clima', 'urbano', 'carretera', 'emergencia'];
-  const listaCasos = document.getElementById('lista-casos');
-  if(!listaCasos) return;
-  
-  listaCasos.innerHTML = '';
-  
-  for(const cat of categorias) {
-    const casos = await getSituaciones(cat);
-    const div = document.createElement('div');
-    div.className = 'tema-item';
-    div.onclick = () => {
-      sitCategoriaActiva = cat;
-      estado.sit[cat].idx = 0;
-      cargarSituacion(cat);
-    };
-    const emoji = cat === 'clima'? '🌧️' : cat === 'urbano'? '🏙️' : cat === 'carretera'? '🛣️' : '🚨';
-    div.innerHTML = `${emoji} ${cat.toUpperCase()} - ${casos.length} casos`;
-    listaCasos.appendChild(div);
-  }
-}
-
-// ===== GARAJE + TIENDA + TIPS + TEMARIO =====
-function cargarGaraje() {
-  const cont = document.getElementById('garage-coches');
-  if(!cont) return;
-  cont.innerHTML = '';
-  let hpTotal = 90;
-  estado.accesorios.forEach(id => {
-    const acc = ACCESORIOS.find(a => a.id === id);
-    if(acc) hpTotal += acc.hp;
-  });
-  document.getElementById('garage-nivel').textContent = Math.floor(estado.coins / 500) + 1;
-  document.getElementById('garage-xp').textContent = estado.coins;
-  document.getElementById('garage-score').textContent = `🏎️ ${hpTotal} CV`;
-
-  COCHES.forEach(coche => {
-    const desbloqueado = estado.coches.includes(coche.id);
-    const div = document.createElement('div');
-    div.className = 'card-mini' + (desbloqueado? '' : ' locked');
-    div.innerHTML = `
-      <div style="font-size:40px; filter:${coche.color}">${coche.emoji}</div>
-      <div>${coche.nombre}</div>
-      <div style="color:#667eea">${coche.cv} CV</div>
-      ${!desbloqueado? `<button class="btn-buy" onclick="comprarCoche('${coche.id}')">Comprar ${coche.precio}💰</button>` : '<div style="color:#2ecc71">✓ Propietario</div>'}
-    `;
-    cont.appendChild(div);
-  });
-}
-
-function comprarCoche(id) {
-  const coche = COCHES.find(c => c.id === id);
-  if(!coche || estado.coins < coche.precio) {
-    alert('No tienes suficientes coins');
-    return;
-  }
-  estado.coins -= coche.precio;
-  estado.coches.push(id);
-  guardar();
-  actualizarCoins();
-  cargarGaraje();
-}
-
-function cargarTienda() {
-  const cont = document.getElementById('tienda-items');
-  if(!cont) return;
-  cont.innerHTML = '';
-
-  ACCESORIOS.forEach(acc => {
-    const comprado = estado.accesorios.includes(acc.id);
-    const div = document.createElement('div');
-    div.className = 'tema-item' + (comprado? ' locked' : '');
-    div.innerHTML = `
-      <div style="font-size:40px">${acc.emoji}</div>
-      <div>${acc.nombre}</div>
-      <div style="color:#667eea">+${acc.hp} CV</div>
-      ${!comprado? `<button class="btn-buy" onclick="comprarAccesorios('${acc.id}')">Comprar ${acc.precio}💰</button>` : '<div style="color:#2ecc71">✓ Comprado</div>'}
-    `;
-    cont.appendChild(div);
-  });
-
-  EMOJI_TIENDA.forEach(emoji => {
-    const comprado = estado.emojis.includes(emoji.id);
-    const div = document.createElement('div');
-    div.className = 'tema-item' + (comprado? ' locked' : '');
-    div.innerHTML = `
-      <div style="font-size:40px">${emoji.emoji}</div>
-      <div>${emoji.nombre}</div>
-      <div style="color:#667eea">Cosmético</div>
-      ${!comprado? `<button class="btn-buy" onclick="comprarEmoji('${emoji.id}')">Comprar ${emoji.precio}💰</button>` : '<div style="color:#2ecc71">✓ Comprado</div>'}
-    `;
-    cont.appendChild(div);
-  });
-}
-
-function comprarAccesorios(id) {
-  const acc = ACCESORIOS.find(a => a.id === id);
-  if(!acc || estado.coins < acc.precio) {
-    alert('No tienes suficientes coins');
-    return;
-  }
-  estado.coins -= acc.precio;
-  estado.accesorios.push(id);
-  guardar();
-  actualizarCoins();
-  cargarTienda();
-
-  const totalAcc = estado.accesorios.length;
-  const msg = document.createElement('div');
-  msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ff8c00,#ff2d55);color:#fff;padding:12px 24px;border-radius:12px;font-weight:bold;z-index:999;animation:slideUp 0.3s';
-  msg.innerHTML = `🏎️ ¡Ya vas creando tu supercoche! ${totalAcc}/42 accesorios`;
-  document.body.appendChild(msg);
-  setTimeout(() => msg.remove(), 2000);
-}
-
-function comprarEmoji(id) {
-  const emoji = EMOJI_TIENDA.find(e => e.id === id);
-  if(!emoji || estado.coins < emoji.precio) {
-    alert('No tienes suficientes coins');
-    return;
-  }
-  estado.coins -= emoji.precio;
-  estado.emojis.push(id);
-  guardar();
-  actualizarCoins();
-  cargarTienda();
-}
-
-function cargarTips() {
-  tipsData = TIPS;
-  currentTip = 0;
-  mostrarTip();
-}
-
-function mostrarTip() {
-  if (tipsData.length === 0) return;
-  const tip = tipsData[currentTip];
-  document.getElementById('tip-content').innerHTML = `
-    <div class="tip-emoji">${tip.emoji}</div>
-    <div class="tip-text">${tip.txt}</div>
-  `;
-  document.getElementById('tip-counter').textContent = `${currentTip + 1} / ${tipsData.length}`;
-}
-
-function nextTip(e) {
-  currentTip = (currentTip + 1) % tipsData.length;
-  mostrarTip();
-}
-
-function prevTip(e) {
-  currentTip = (currentTip - 1 + tipsData.length) % tipsData.length;
-  mostrarTip();
-}
-
-function cargarTemario() {
-  const container = document.getElementById('temario-lista');
-  if(!container) return;
-  container.innerHTML = `
-    <div class="tema-item" onclick="abrirPDF('./01_Senales_Tomo_I_RD_465_2025.pdf')">
-      <div style="font-size:40px">🚦</div>
-      <div>Señales de tráfico</div>
-      <div style="font-size:11px;color:#999">RD 465/2025</div>
-    </div>
-    <div class="tema-item" onclick="abrirPDF('./02_Normas_Circulacion_Tomo_II_Edicion_2024.pdf')">
-      <div style="font-size:40px">📋</div>
-      <div>Normas Circulación</div>
-      <div style="font-size:11px;color:#999">Edición 2024</div>
-    </div>
-    <div class="tema-item" onclick="abrirPDF('./04_Manual_VIII_Mecanica_2024.pdf')">
-      <div style="font-size:40px">⚙️</div>
-      <div>Mecánica del vehículo</div>
-      <div style="font-size:11px;color:#999">Manual VIII 2024</div>
-    </div>
-    <div class="tema-item" onclick="abrirPDF('./03_Manual_IX_Primeros_Auxilios_2025.pdf')">
-      <div style="font-size:40px">🚑</div>
-      <div>Primeros Auxilios</div>
-      <div style="font-size:11px;color:#999">Manual IX 2025</div>
-    </div>
-    <div class="tema-item" onclick="abrirPDF('./05_Medio_Ambiente_Distintivos_DGT_2025.pdf')">
-      <div style="font-size:40px">♻️</div>
-      <div>Medio Ambiente</div>
-      <div style="font-size:11px;color:#999">Distintivos DGT 2025</div>
-    </div>
-  `;
-}
-
-function abrirPDF(ruta) {
-  const modal = document.createElement('div');
-  modal.id = 'pdf-modal';
-  modal.style.cssText = `
-    position:fixed;top:0;left:0;right:0;bottom:0;
-    background:#0a0a;z-index:9999;
-    display:flex;flex-direction:column;
-  `;
-  modal.innerHTML = `
-    <div style="background:#1a1a1a;padding:12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #333">
-      <button onclick="cerrarPDF()" style="background:none;border:none;color:#00D9FF;font-size:16px;font-weight:700">← Volver</button>
-      <div style="color:#fff;font-size:15px;font-weight:700">Temario DGT</div>
-      <div style="width:60px"></div>
-    </div>
-    <iframe src="${ruta}" style="flex:1;border:none;width:100%"></iframe>
-  `;
-  document.body.appendChild(modal);
-}
-
-function cerrarPDF() {
-  const modal = document.getElementById('pdf-modal');
-  if(modal) modal.remove();
-}
-
-function actualizarMensajeMotivacional() {
-  const mensajes = [
-    "Vas por buen camino 💪",
-    "Cada fallo te hace más fuerte 🔥",
-    "El examen DGT es tuyo 🚗",
-    "No pares ahora 💎",
-    "Concéntrate y aprobarás 👑"
-  ];
-  const msg = mensajes[Math.floor(Math.random() * mensajes.length)];
-  const el = document.getElementById('motivacion');
-  if(el) el.textContent = msg;
-}
-
-// ===== EXPORTS =====
-export {
-  init,
-  iniciarCarga,
-  entrarApp,
-  cambiarTab,
-  cambiarSubTab,
-  siguienteTest,
-  siguienteSituacion,
-  iniciarExamen,
-  siguientePreguntaExamen,
-  prevTip,
-  nextTip,
-  comprarEmoji,
-  abrirPDF,
-  cerrarPDF,
-  comprarCoche,
-  comprarAccesorios,
-  mostrarPista,
-  cargarCasos
-};
+//...aquí continúa toda tu lógica: barajarArray, init, estado, cambiarTab, cargarPregunta, etc
+// Pega aquí el resto de funciones de tu app.js anterior, desde "function barajarArray" hasta el final
