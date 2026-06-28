@@ -345,5 +345,11 @@ h1{font-size:24px;font-weight:900;letter-spacing:1.5px;margin-bottom:3px}
 </div>
 
 <script src="app.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if(typeof iniciarCarga === 'function') iniciarCarga();
+    else console.error('iniciarCarga no existe en app.js');
+  });
+</script>
 </body>
 </html>
