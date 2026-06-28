@@ -1,4 +1,4 @@
-// GASDRIVE DGT V9.6.1 ES - ARQUITECTURA CHRONICLES CAT + PLACEHOLDER GRID
+// GASDRIVE DGT V9.6.2 ES - ADAPTADO A TU HTML
 const EMOJIS_ACIERTO = ['🚀','💎','👑','🔥','💯','⚡','🏆','🦄','🤑','✅','💪','😎','🎯','💥','🌟','🎉'];
 const EMOJIS_FALLO = ['❌','💀','😭','⛔','💔','😵','🤦','🚫','💩','🤡','💥','😤'];
 
@@ -12,39 +12,46 @@ async function iniciarCarga() {
   let cargadas = 0;
   const cats = ['senales', 'normas', 'mecanica', 'auxilios', 'medioambiente'];
 
-  status.textContent = '📚 0/5 categorías';
+  if(status) status.textContent = '📚 0/5 categorías';
 
   // CARGA 1 A 1 CON FEEDBACK REAL - NO Promise.all
   for (const cat of cats) {
     try {
       await getPreguntas(cat);
       cargadas++;
-      status.textContent = `📚 ${cargadas}/5 categorías`;
+      if(status) status.textContent = `📚 ${cargadas}/5 categorías`;
     } catch (err) {
       console.warn(`${cat} falló:`, err);
-      // Si falla, sigue con las demás. No revienta todo.
     }
   }
 
-  // SIN setTimeout(2000) - Entra cuando acaba de cargar
   if (cargadas === 0) {
-    status.textContent = '❌ Error cargando datos. Revisa tu conexión';
-    btn.textContent = 'REINTENTAR';
-    btn.disabled = false;
-    btn.onclick = () => location.reload();
+    if(status) status.textContent = '❌ Error cargando datos. Revisa tu conexión';
+    if(btn) {
+      btn.textContent = 'REINTENTAR';
+      btn.disabled = false;
+      btn.onclick = () => location.reload();
+    }
   } else {
     DATOS_LISTOS = true;
-    status.textContent = cargadas === 5? '✅ Todo listo' : `⚠️ ${cargadas}/5 listas - Entra igual`;
-    btn.textContent = 'EMPEZAR';
-    btn.disabled = false;
-    btn.onclick = entrarApp;
+    if(status) status.textContent = cargadas === 5? '✅ Todo listo' : `⚠️ ${cargadas}/5 listas - Entra igual`;
+    if(btn) {
+      btn.textContent = 'EMPEZAR';
+      btn.disabled = false;
+      btn.onclick = entrarApp;
+    } else {
+      // Si no hay pantalla intro, entrar directo
+      entrarApp();
+    }
   }
 }
 
 function entrarApp() {
   if (!DATOS_LISTOS) return;
-  document.getElementById('intro-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  const intro = document.getElementById('intro-screen');
+  const app = document.getElementById('app');
+  if(intro) intro.style.display = 'none';
+  if(app) app.style.display = 'block';
   init();
 }
 
@@ -258,7 +265,7 @@ function getPreguntas(cat) {
   if (cachePreguntas[cat]) return Promise.resolve(cachePreguntas[cat]);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 3000);
-  return fetch(`./data/${cat}.json`, { signal: controller.signal })
+  return fetch(`./content/preguntas/${cat}.json`, { signal: controller.signal })
 .then(r => {
       clearTimeout(timeout);
       if (!r.ok) throw new Error(`No se encontró ${cat}.json`);
@@ -280,7 +287,7 @@ async function getSituaciones(cat) {
   const key = `sit_${cat}`;
   if (cachePreguntas[key]) return cachePreguntas[key];
   try {
-    const res = await fetch(`./data/situaciones.json`);
+    const res = await fetch(`./content/casos/situaciones.json`);
     const data = await res.json();
     const filtrado = data.filter(s => s.categoria === cat);
     cachePreguntas[key] = filtrado;
@@ -309,14 +316,14 @@ function barajarArray(arr) {
 
 // ===== INIT =====
 function init() {
-  console.log("GasDrive V9.6.1 ES cargado");
+  console.log("GasDrive V9.6.2 ES cargado");
   actualizarCoins();
   cargarPregunta('senales');
   cargarPregunta('normas');
   cargarPregunta('mecanica');
   cargarPregunta('auxilios');
   cargarPregunta('medioambiente');
-  cargarSituacion('clima');
+  cargarCasos();
   actualizarMensajeMotivacional();
 }
 
@@ -347,15 +354,15 @@ function mostrarEmoji(acierto, element) {
 // ===== TABS =====
 function cambiarTab(tab, e) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  e.target.closest('.tab-btn').classList.add('active');
+  e.currentTarget.classList.add('active');
   if(tab === 'garage') cargarGaraje();
   if(tab === 'tienda') cargarTienda();
   if(tab === 'tips') cargarTips();
   if(tab === 'temario') cargarTemario();
   if(tab === 'test') cargarPregunta('senales');
-  if(tab === 'situaciones') cargarSituacion(sitCategoriaActiva);
+  if(tab === 'situaciones') cargarCasos();
 }
 
 function cambiarSubTab(e, tab, sub) {
@@ -489,6 +496,23 @@ function responderTest(cat, idx, el) {
 function siguienteTest(e, cat) {
   estado.test[cat].idx++;
   cargarPregunta(cat);
+}
+
+// ===== MOSTRAR PISTA IRIS =====
+export function mostrarPista(cat){
+  if(estado.coins < 5) {
+    mostrarModal('💰 No tienes monedas suficientes. Necesitas 5 monedas.');
+    return;
+  }
+  const s = estado.test[cat];
+  const p = s.current;
+  const pistaDiv = document.getElementById(`test-${cat}-pista`);
+  
+  estado.coins -= 5;
+  pistaDiv.textContent = p.pista || p.explicacion || '💡 Lee bien todas las opciones antes de responder';
+  pistaDiv.classList.add('activa');
+  actualizarCoins();
+  guardar();
 }
 
 // ===== CASOS - ANTAGÓNICAS CORREGIDO =====
@@ -740,9 +764,32 @@ function reiniciarExamen() {
   if(imgExamen) imgExamen.innerHTML = '';
 }
 
+// ===== CASOS - CARGAR LISTA =====
+async function cargarCasos() {
+  const categorias = ['clima', 'urbano', 'carretera', 'emergencia'];
+  const listaCasos = document.getElementById('lista-casos');
+  if(!listaCasos) return;
+  
+  listaCasos.innerHTML = '';
+  
+  for(const cat of categorias) {
+    const casos = await getSituaciones(cat);
+    const div = document.createElement('div');
+    div.className = 'tema-item';
+    div.onclick = () => {
+      sitCategoriaActiva = cat;
+      estado.sit[cat].idx = 0;
+      cargarSituacion(cat);
+    };
+    const emoji = cat === 'clima'? '🌧️' : cat === 'urbano'? '🏙️' : cat === 'carretera'? '🛣️' : '🚨';
+    div.innerHTML = `${emoji} ${cat.toUpperCase()} - ${casos.length} casos`;
+    listaCasos.appendChild(div);
+  }
+}
+
 // ===== GARAJE + TIENDA + TIPS + TEMARIO =====
 function cargarGaraje() {
-  const cont = document.getElementById('garage-lista');
+  const cont = document.getElementById('garage-coches');
   if(!cont) return;
   cont.innerHTML = '';
   let hpTotal = 90;
@@ -750,12 +797,14 @@ function cargarGaraje() {
     const acc = ACCESORIOS.find(a => a.id === id);
     if(acc) hpTotal += acc.hp;
   });
+  document.getElementById('garage-nivel').textContent = Math.floor(estado.coins / 500) + 1;
+  document.getElementById('garage-xp').textContent = estado.coins;
   document.getElementById('garage-score').textContent = `🏎️ ${hpTotal} CV`;
 
   COCHES.forEach(coche => {
     const desbloqueado = estado.coches.includes(coche.id);
     const div = document.createElement('div');
-    div.className = 'garage-car' + (desbloqueado? '' : ' locked');
+    div.className = 'card-mini' + (desbloqueado? '' : ' locked');
     div.innerHTML = `
       <div style="font-size:40px; filter:${coche.color}">${coche.emoji}</div>
       <div>${coche.nombre}</div>
@@ -780,14 +829,14 @@ function comprarCoche(id) {
 }
 
 function cargarTienda() {
-  const cont = document.getElementById('emoji-tienda');
+  const cont = document.getElementById('tienda-items');
   if(!cont) return;
   cont.innerHTML = '';
 
   ACCESORIOS.forEach(acc => {
     const comprado = estado.accesorios.includes(acc.id);
     const div = document.createElement('div');
-    div.className = 'emoji-item' + (comprado? ' locked' : '');
+    div.className = 'tema-item' + (comprado? ' locked' : '');
     div.innerHTML = `
       <div style="font-size:40px">${acc.emoji}</div>
       <div>${acc.nombre}</div>
@@ -800,7 +849,7 @@ function cargarTienda() {
   EMOJI_TIENDA.forEach(emoji => {
     const comprado = estado.emojis.includes(emoji.id);
     const div = document.createElement('div');
-    div.className = 'emoji-item' + (comprado? ' locked' : '');
+    div.className = 'tema-item' + (comprado? ' locked' : '');
     div.innerHTML = `
       <div style="font-size:40px">${emoji.emoji}</div>
       <div>${emoji.nombre}</div>
@@ -874,27 +923,27 @@ function cargarTemario() {
   const container = document.getElementById('temario-lista');
   if(!container) return;
   container.innerHTML = `
-    <div class="temario-item" onclick="abrirPDF('./01_Senales_Tomo_I_RD_465_2025.pdf')">
+    <div class="tema-item" onclick="abrirPDF('./01_Senales_Tomo_I_RD_465_2025.pdf')">
       <div style="font-size:40px">🚦</div>
       <div>Señales de tráfico</div>
       <div style="font-size:11px;color:#999">RD 465/2025</div>
     </div>
-    <div class="temario-item" onclick="abrirPDF('./02_Normas_Circulacion_Tomo_II_Edicion_2024.pdf')">
+    <div class="tema-item" onclick="abrirPDF('./02_Normas_Circulacion_Tomo_II_Edicion_2024.pdf')">
       <div style="font-size:40px">📋</div>
       <div>Normas Circulación</div>
       <div style="font-size:11px;color:#999">Edición 2024</div>
     </div>
-    <div class="temario-item" onclick="abrirPDF('./04_Manual_VIII_Mecanica_2024.pdf')">
+    <div class="tema-item" onclick="abrirPDF('./04_Manual_VIII_Mecanica_2024.pdf')">
       <div style="font-size:40px">⚙️</div>
       <div>Mecánica del vehículo</div>
       <div style="font-size:11px;color:#999">Manual VIII 2024</div>
     </div>
-    <div class="temario-item" onclick="abrirPDF('./03_Manual_IX_Primeros_Auxilios_2025.pdf')">
+    <div class="tema-item" onclick="abrirPDF('./03_Manual_IX_Primeros_Auxilios_2025.pdf')">
       <div style="font-size:40px">🚑</div>
       <div>Primeros Auxilios</div>
       <div style="font-size:11px;color:#999">Manual IX 2025</div>
     </div>
-    <div class="temario-item" onclick="abrirPDF('./05_Medio_Ambiente_Distintivos_DGT_2025.pdf')">
+    <div class="tema-item" onclick="abrirPDF('./05_Medio_Ambiente_Distintivos_DGT_2025.pdf')">
       <div style="font-size:40px">♻️</div>
       <div>Medio Ambiente</div>
       <div style="font-size:11px;color:#999">Distintivos DGT 2025</div>
@@ -956,5 +1005,7 @@ export {
   abrirPDF,
   cerrarPDF,
   comprarCoche,
-  comprarAccesorios
+  comprarAccesorios,
+  mostrarPista,
+  cargarCasos
 };
