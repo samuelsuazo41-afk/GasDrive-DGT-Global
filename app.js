@@ -970,6 +970,8 @@ const SENALES_SVG = {
   "s-879": `<svg viewBox="0 0 200 200"><rect x="10" y="10" width="180" height="180" rx="10" fill="white" stroke="#000" stroke-width="8"/><text x="100" y="115" text-anchor="middle" font-size="30" font-weight="bold" fill="#000">MAX 2h</text></svg>`,
   "s-880": `<svg viewBox="0 0 200 200"><rect x="10" y="10" width="180" height="180" rx="10" fill="white" stroke="#000" stroke-width="8"/><text x="100" y="115" text-anchor="middle" font-size="30" font-weight="bold" fill="#000">PMR</text></svg>`
 };
+
+
 const TIPS = [
   {emoji:'🚗', txt:'Regla de los 2 segundos: mantén distancia con el coche de delante'},
   {emoji:'👀', txt:'Mira 12 segundos hacia delante, no solo el coche de delante'},
@@ -1144,6 +1146,7 @@ const EMOJI_TIENDA = [
   {id:'e4',nombre:'Rayo',emoji:'⚡',precio:400},
   {id:'e5',nombre:'Unicornio',emoji:'🦄',precio:1000}
 ];
+
 
 
 // ========= BLOQUE LÓGICA - V10.5.2 ES SIN PISTAS =========
