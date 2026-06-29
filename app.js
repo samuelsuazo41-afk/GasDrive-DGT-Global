@@ -1,4 +1,4 @@
-// ========== GASDRIVE DGT V9.6.2 ES - BLOQUE DATOS ==========
+// ========== GASDRIVE DGT V10.5.1 ES - BLOQUE DATOS ==========
 // === INICIO BLOQUE DATOS - NO TOCAR AL EDITAR LÓGICA ===
 // Aquí van TODOS tus bancos. Solo los pegas 1 vez y te olvidas.
 
@@ -1146,7 +1146,7 @@ const EMOJI_TIENDA = [
 ];
 
 
-// ========= BLOQUE LÓGICA - V9.6.2 ES SIN PISTAS =========
+// ========= BLOQUE LÓGICA - V10.5.2 ES SIN PISTAS =========
 const EMOJIS_ACIERTO = ['🚀','💎','👑','🔥','💯','⚡','🏆','🦄','🤑','✅','💪','😎','🎯','💥','🌟','🎉'];
 const EMOJIS_FALLO = ['❌','💀','😭','⛔','💔','😵','🤦','🚫','💩','🤡','💥','😤'];
 
@@ -1258,7 +1258,7 @@ function barajarArray(arr) {
 
 // ===== INIT =====
 function init() {
-  console.log("GasDrive V9.6.2 ES - Datos integrados, PDFs en raíz");
+  console.log("GasDrive V10.5.2 ES - Datos integrados, PDFs en raíz");
   actualizarCoins();
   cargarPregunta('senales');
   cargarPregunta('normas');
